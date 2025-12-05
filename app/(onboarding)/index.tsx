@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -73,9 +73,11 @@ export default function WelcomeScreen() {
           onPress={() => router.push('/(onboarding)/value')}
         />
         
-        <Text style={styles.signInText}>
-          Already have an account? <Text style={styles.signInLink}>Sign in</Text>
-        </Text>
+        <TouchableOpacity onPress={() => router.push('/(onboarding)/sign-in')}>
+          <Text style={styles.signInText}>
+            Already have an account? <Text style={styles.signInLink}>Sign in</Text>
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
