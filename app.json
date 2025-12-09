@@ -7,7 +7,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "scheme": "sacred",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -64,7 +64,6 @@
     "plugins": [
       "expo-router",
       "expo-asset",
-      "./plugins/withModularHeaders.js",
       [
         "@react-native-google-signin/google-signin",
         {
