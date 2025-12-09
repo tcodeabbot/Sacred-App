@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1028433592068",
+    "project_id": "sacred-mobile-app-d732f",
+    "storage_bucket": "sacred-mobile-app-d732f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1028433592068:android:40b9234926dd40457e9a51",
+        "android_client_info": {
+          "package_name": "com.sacred"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1028433592068-2hi3tqojgul3kvol4afgft2t13jmsi90.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAB3SM02LF09lt7D6uTd6723V6wF_21U0g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1028433592068-2hi3tqojgul3kvol4afgft2t13jmsi90.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

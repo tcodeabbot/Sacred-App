@@ -18,13 +18,15 @@ import { Button } from '@/components/ui/Button';
 import { colors } from '@/constants/colors';
 import { useAuthStore } from '@/store/useAuthStore';
 
-export default function SignInScreen() {
+export default function SignUpScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const { signInWithEmail, signInWithGoogle, signInWithFacebook, signInWithApple, loading, error, clearError, isAuthenticated } = useAuthStore();
+  const { signUpWithEmail, signInWithGoogle, signInWithFacebook, signInWithApple, loading, error, clearError, isAuthenticated } = useAuthStore();
 
   // Navigate to home when authenticated
   useEffect(() => {
@@ -36,20 +38,30 @@ export default function SignInScreen() {
   // Show error alert
   useEffect(() => {
     if (error) {
-      Alert.alert('Sign In Error', error, [
+      Alert.alert('Sign Up Error', error, [
         { text: 'OK', onPress: clearError }
       ]);
     }
   }, [error]);
 
-  const handleEmailSignIn = async () => {
+  const handleEmailSignUp = async () => {
     if (!email || !password) {
       Alert.alert('Missing Information', 'Please enter both email and password');
       return;
     }
 
+    if (password.length < 6) {
+      Alert.alert('Weak Password', 'Password should be at least 6 characters');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Password Mismatch', 'Passwords do not match');
+      return;
+    }
+
     try {
-      await signInWithEmail(email, password);
+      await signUpWithEmail(email, password);
     } catch (error) {
       // Error is handled in the store and shown via useEffect
     }
@@ -102,9 +114,9 @@ export default function SignInScreen() {
               </TouchableOpacity>
 
               <View style={styles.headerTextContainer}>
-                <Text style={styles.headerTitle}>Welcome Back</Text>
+                <Text style={styles.headerTitle}>Create Account</Text>
                 <Text style={styles.headerSubtitle}>
-                  Sign in to continue your spiritual journey
+                  Join us on your spiritual journey
                 </Text>
               </View>
             </View>
@@ -112,9 +124,9 @@ export default function SignInScreen() {
         </LinearGradient>
 
         <View style={styles.content}>
-          {/* Social Sign-In Buttons */}
+          {/* Social Sign-Up Buttons */}
           <View style={styles.socialSection}>
-            <Text style={styles.sectionTitle}>Sign in with</Text>
+            <Text style={styles.sectionTitle}>Sign up with</Text>
 
             <View style={styles.socialButtons}>
               <TouchableOpacity
@@ -150,9 +162,9 @@ export default function SignInScreen() {
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Email Sign-In Form */}
+          {/* Email Sign-Up Form */}
           <View style={styles.formSection}>
-            <Text style={styles.sectionTitle}>Sign in with email</Text>
+            <Text style={styles.sectionTitle}>Sign up with email</Text>
 
             <View style={styles.inputContainer}>
               <Ionicons
@@ -182,13 +194,13 @@ export default function SignInScreen() {
               />
               <TextInput
                 style={[styles.input, styles.passwordInput]}
-                placeholder="Password"
+                placeholder="Password (min. 6 characters)"
                 placeholderTextColor={colors.text.muted}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
-                autoComplete="password"
+                autoComplete="password-new"
               />
               <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
@@ -202,29 +214,60 @@ export default function SignInScreen() {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.forgotPassword}>
-              <Text style={styles.forgotPasswordText}>Forgot password?</Text>
-            </TouchableOpacity>
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name="lock-closed-outline"
+                size={20}
+                color={colors.text.muted}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={[styles.input, styles.passwordInput]}
+                placeholder="Confirm password"
+                placeholderTextColor={colors.text.muted}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showConfirmPassword}
+                autoCapitalize="none"
+                autoComplete="password-new"
+              />
+              <TouchableOpacity
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={styles.eyeIcon}
+              >
+                <Ionicons
+                  name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'}
+                  size={20}
+                  color={colors.text.muted}
+                />
+              </TouchableOpacity>
+            </View>
 
             <Button
-              title="Sign In"
-              onPress={handleEmailSignIn}
+              title="Create Account"
+              onPress={handleEmailSignUp}
               gradient={colors.gradients.teal}
-              style={styles.signInButton}
+              style={styles.signUpButton}
               loading={loading}
               disabled={loading}
             />
+
+            <Text style={styles.termsText}>
+              By creating an account, you agree to our{'\n'}
+              <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
+              <Text style={styles.termsLink}>Privacy Policy</Text>
+            </Text>
           </View>
 
-          {/* Sign Up Link */}
-          <View style={styles.signUpSection}>
-            <Text style={styles.signUpText}>
-              Don't have an account?{' '}
+          {/* Sign In Link */}
+          <View style={styles.signInSection}>
+            <Text style={styles.signInText}>
+              Already have an account?{' '}
               <Text
-                style={styles.signUpLink}
-                onPress={() => router.push('/(onboarding)/sign-up')}
+                style={styles.signInLink}
+                onPress={() => router.push('/(onboarding)/sign-in')}
               >
-                Sign up
+                Sign in
               </Text>
             </Text>
           </View>
@@ -356,27 +399,29 @@ const styles = StyleSheet.create({
     right: 16,
     padding: 8,
   },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: 24,
+  signUpButton: {
+    marginTop: 8,
+    marginBottom: 16,
   },
-  forgotPasswordText: {
-    fontSize: 14,
+  termsText: {
+    fontSize: 12,
+    color: colors.text.muted,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  termsLink: {
     color: colors.accent.teal,
     fontWeight: '600',
   },
-  signInButton: {
-    marginTop: 8,
-  },
-  signUpSection: {
+  signInSection: {
     alignItems: 'center',
     paddingBottom: 32,
   },
-  signUpText: {
+  signInText: {
     fontSize: 14,
     color: colors.text.muted,
   },
-  signUpLink: {
+  signInLink: {
     color: colors.accent.teal,
     fontWeight: '600',
   },

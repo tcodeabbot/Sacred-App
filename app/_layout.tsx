@@ -4,8 +4,16 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet } from 'react-native';
 import { colors } from '@/constants/colors';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export default function RootLayout() {
+  const initializeAuth = useAuthStore((state) => state.initializeAuth);
+
+  useEffect(() => {
+    // Initialize Firebase auth listener
+    initializeAuth();
+  }, []);
+
   return (
     <GestureHandlerRootView style={styles.container}>
       <StatusBar style="light" />
@@ -20,28 +28,7 @@ export default function RootLayout() {
         <Stack.Screen name="(onboarding)" options={{ animation: 'fade' }} />
         <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
         <Stack.Screen
-          name="(modals)/intercept"
-          options={{
-            presentation: 'fullScreenModal',
-            animation: 'fade',
-          }}
-        />
-        <Stack.Screen
-          name="(modals)/active-prayer"
-          options={{
-            presentation: 'fullScreenModal',
-            animation: 'slide_from_bottom',
-          }}
-        />
-        <Stack.Screen
-          name="(modals)/prayer-complete"
-          options={{
-            presentation: 'fullScreenModal',
-            animation: 'fade',
-          }}
-        />
-        <Stack.Screen
-          name="(modals)/upgrade"
+          name="(modals)"
           options={{
             presentation: 'modal',
             animation: 'slide_from_bottom',

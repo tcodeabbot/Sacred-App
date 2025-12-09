@@ -70,7 +70,7 @@ export default function WelcomeScreen() {
       <View style={styles.bottomSection}>
         <Button
           title="Get Started"
-          onPress={() => router.push('/(onboarding)/value')}
+          onPress={() => router.push('/(onboarding)/sign-in')}
         />
         
         <TouchableOpacity onPress={() => router.push('/(onboarding)/sign-in')}>

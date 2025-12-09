@@ -11,6 +11,8 @@ export default function OnboardingLayout() {
       }}
     >
       <Stack.Screen name="index" />
+      <Stack.Screen name="sign-in" />
+      <Stack.Screen name="sign-up" />
       <Stack.Screen name="value" />
       <Stack.Screen name="apps" />
       <Stack.Screen name="frequency" />

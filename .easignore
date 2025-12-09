@@ -1,0 +1,3 @@
+# Ignore native folders so EAS regenerates them with plugins
+android/
+ios/
