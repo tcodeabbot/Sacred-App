@@ -20,6 +20,7 @@
       "googleServicesFile": "./GoogleService-Info.plist",
       "supportsTablet": true,
       "bundleIdentifier": "com.eidos.sacred-mobile-app",
+      "useFrameworks": "static",
       "infoPlist": {
         "CFBundleURLTypes": [
           {

@@ -2,25 +2,25 @@ const { withPodfile } = require('@expo/config-plugins');
 
 /**
  * Configure Podfile for React Native Firebase compatibility
- * Uses dynamic frameworks which work better with Firebase Swift pods
+ * Uses static frameworks which are required for Firebase Swift pods
  */
 const withModularHeaders = (config) => {
   return withPodfile(config, (config) => {
     const podfile = config.modResults;
 
-    // Add use_modular_headers! after use_expo_modules!
-    if (!podfile.contents.includes('use_modular_headers!')) {
+    // Add Firebase static framework variable before target block
+    if (!podfile.contents.includes('$RNFirebaseAsStaticFramework')) {
       podfile.contents = podfile.contents.replace(
-        /use_expo_modules!/g,
-        'use_expo_modules!\n  use_modular_headers!'
+        /platform :ios/,
+        '$RNFirebaseAsStaticFramework = true\n\nplatform :ios'
       );
     }
 
-    // Use dynamic frameworks instead of static for Firebase compatibility
+    // Use static frameworks for Firebase compatibility
     if (!podfile.contents.includes('use_frameworks!')) {
       podfile.contents = podfile.contents.replace(
-        /use_modular_headers!/g,
-        'use_modular_headers!\n  use_frameworks! :linkage => :dynamic'
+        /use_expo_modules!/g,
+        'use_expo_modules!\n  use_frameworks! :linkage => :static'
       );
     }
 
