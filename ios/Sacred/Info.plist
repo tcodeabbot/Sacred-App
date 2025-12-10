@@ -29,19 +29,32 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>sacred</string>
-          <string>com.sacred.app</string>
+          <string>com.googleusercontent.apps.927596446336-hgfpomq848fmnibuctv26ojlv6kjet95.apps.googleusercontent.com</string>
         </array>
       </dict>
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>com.googleusercontent.apps.1028433592068-jhg9jqh0ku20psckag744bi22k5pqsjq</string>
+          <string>com.googleusercontent.apps.927596446336-hgfpomq848fmnibuctv26ojlv6kjet95.apps.googleusercontent.com</string>
+        </array>
+      </dict>
+      <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>com.googleusercontent.apps.343809534930-qmdjjacb9c2m436rv18ckpu5mo076vgj</string>
+        </array>
+      </dict>
+      <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>exp+sacred-app</string>
         </array>
       </dict>
     </array>
     <key>CFBundleVersion</key>
     <string>1</string>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>LSRequiresIPhoneOS</key>
