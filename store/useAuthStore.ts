@@ -3,6 +3,7 @@ import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { Platform } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { LoginManager, AccessToken } from 'react-native-fbsdk-next';
 
 // Configure Google Sign-In
 GoogleSignin.configure({
@@ -114,11 +115,52 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true, error: null });
 
     try {
-      // TODO: Implement Facebook login using @react-native-firebase/auth
-      // You'll need to add react-native-fbsdk-next package
-      throw new Error('Facebook sign-in not yet implemented. Please install react-native-fbsdk-next');
+      console.log('Initializing Facebook Sign-In...');
+
+      // Attempt login with permissions
+      const result = await LoginManager.logInWithPermissions(['public_profile', 'email']);
+
+      if (result.isCancelled) {
+        console.log('Facebook sign-in cancelled by user');
+        set({ loading: false });
+        return;
+      }
+
+      console.log('Facebook login successful, getting access token...');
+
+      // Get the access token
+      const data = await AccessToken.getCurrentAccessToken();
+
+      if (!data) {
+        throw new Error('Failed to get Facebook access token');
+      }
+
+      console.log('Creating Facebook credential for Firebase...');
+
+      // Create a Facebook credential with the token
+      const facebookCredential = auth.FacebookAuthProvider.credential(data.accessToken);
+
+      // Sign in with the credential
+      const userCredential = await auth().signInWithCredential(facebookCredential);
+
+      console.log('Facebook sign-in successful:', userCredential.user.email);
+
+      set({
+        user: userCredential.user,
+        isAuthenticated: true,
+        loading: false,
+        error: null,
+      });
     } catch (error: any) {
       console.error('Facebook Sign-In Error:', error);
+
+      // Handle user cancellation gracefully
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        const errorMessage = 'An account already exists with the same email address but different sign-in credentials';
+        set({ error: errorMessage, loading: false });
+        throw new Error(errorMessage);
+      }
+
       const errorMessage = error.message || 'Failed to sign in with Facebook';
       set({ error: errorMessage, loading: false });
       throw error;
@@ -195,6 +237,14 @@ export const useAuthStore = create<AuthState>((set) => ({
       } catch (error) {
         // Ignore if not signed in
         console.log('Google sign out skipped (not signed in)');
+      }
+
+      // Sign out from Facebook if previously signed in
+      try {
+        LoginManager.logOut();
+      } catch (error) {
+        // Ignore if not signed in
+        console.log('Facebook sign out skipped (not signed in)');
       }
 
       // Sign out from Firebase

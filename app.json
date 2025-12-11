@@ -24,11 +24,14 @@
         "CFBundleURLTypes": [
           {
             "CFBundleURLSchemes": [
-              "com.googleusercontent.apps.343809534930-qmdjjacb9c2m436rv18ckpu5mo076vgj"
+              "com.googleusercontent.apps.343809534930-qmdjjacb9c2m436rv18ckpu5mo076vgj",
+              "fb$(EXPO_PUBLIC_FACEBOOK_APP_ID)"
             ]
           }
         ],
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "FacebookAppID": "$(EXPO_PUBLIC_FACEBOOK_APP_ID)",
+        "FacebookDisplayName": "Sacred"
       }
     },
     "android": {

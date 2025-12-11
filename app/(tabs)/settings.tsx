@@ -1,9 +1,10 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors } from '@/constants/colors';
 import { useAppStore } from '@/store/useAppStore';
+import { useAuthStore } from '@/store/useAuthStore';
 
 interface SettingsRowProps {
   icon: string;
@@ -29,10 +30,41 @@ function SettingsRow({ icon, label, value, highlight, onPress }: SettingsRowProp
 export default function SettingsScreen() {
   const router = useRouter();
   const { settings, blockedApps, resetForDemo } = useAppStore();
+  const { signOut, user } = useAuthStore();
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const blockedCount = blockedApps.filter((a) => a.isBlocked).length;
-  
+
   const getDurationLabel = (seconds: number) => {
     return `${seconds / 60} min`;
+  };
+
+  const handleSignOut = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsSigningOut(true);
+              await signOut();
+              router.replace('/(onboarding)');
+            } catch (error) {
+              console.error('Sign out error:', error);
+              Alert.alert('Error', 'Failed to sign out. Please try again.');
+            } finally {
+              setIsSigningOut(false);
+            }
+          },
+        },
+      ]
+    );
   };
   
   return (
@@ -86,6 +118,20 @@ export default function SettingsScreen() {
             <Text style={styles.sectionTitle}>ACCOUNT</Text>
           </View>
           <View style={styles.sectionContent}>
+            {user && (
+              <>
+                <View style={styles.userInfoContainer}>
+                  <Text style={styles.userInfoIcon}>👤</Text>
+                  <View style={styles.userInfoText}>
+                    <Text style={styles.userEmail}>{user.email}</Text>
+                    {user.displayName && (
+                      <Text style={styles.userDisplayName}>{user.displayName}</Text>
+                    )}
+                  </View>
+                </View>
+                <View style={styles.separator} />
+              </>
+            )}
             <SettingsRow
               icon="⭐"
               label="Upgrade to Premium"
@@ -96,6 +142,12 @@ export default function SettingsScreen() {
             <SettingsRow icon="🔒" label="Privacy" />
             <View style={styles.separator} />
             <SettingsRow icon="❓" label="Help & Support" />
+            <View style={styles.separator} />
+            <SettingsRow
+              icon="🚪"
+              label={isSigningOut ? "Signing out..." : "Sign Out"}
+              onPress={handleSignOut}
+            />
           </View>
         </View>
         
@@ -193,6 +245,29 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.cardBorder,
     marginLeft: 50,
+  },
+  userInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  userInfoIcon: {
+    fontSize: 20,
+    marginRight: 14,
+  },
+  userInfoText: {
+    flex: 1,
+  },
+  userEmail: {
+    fontSize: 16,
+    color: colors.text.primary,
+    fontWeight: '500',
+  },
+  userDisplayName: {
+    fontSize: 14,
+    color: colors.text.muted,
+    marginTop: 2,
   },
   resetButton: {
     backgroundColor: colors.card,
