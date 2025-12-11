@@ -69,6 +69,18 @@
           "iosUrlScheme": "com.googleusercontent.apps.343809534930-qmdjjacb9c2m436rv18ckpu5mo076vgj"
         }
       ],
+      [
+        "react-native-fbsdk-next",
+        {
+          "appID": "930460469412108",
+          "clientToken": "2bbc2f2079743e48a80521388c2d480f",
+          "displayName": "Sacred",
+          "scheme": "fb930460469412108",
+          "advertiserIDCollectionEnabled": false,
+          "autoLogAppEventsEnabled": false,
+          "isAutoInitEnabled": true
+        }
+      ],
       "@react-native-firebase/app",
       "@react-native-firebase/auth"
     ],

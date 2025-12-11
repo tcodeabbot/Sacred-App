@@ -26,6 +26,13 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="sacred"/>
         <data android:scheme="com.sacred.app"/>
+        <data android:scheme="exp+sacred-app"/>
+      </intent-filter>
+      <intent-filter android:autoVerify="true" data-generated="true">
+        <action android:name="android.intent.action.VIEW"/>
+        <data android:scheme="com.sacred.app" android:host="oauth2redirect" android:pathPrefix="/google"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <category android:name="android.intent.category.DEFAULT"/>
       </intent-filter>
     </activity>
   </application>

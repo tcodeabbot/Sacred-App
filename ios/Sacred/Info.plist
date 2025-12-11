@@ -29,19 +29,8 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>com.googleusercontent.apps.927596446336-hgfpomq848fmnibuctv26ojlv6kjet95.apps.googleusercontent.com</string>
-        </array>
-      </dict>
-      <dict>
-        <key>CFBundleURLSchemes</key>
-        <array>
-          <string>com.googleusercontent.apps.927596446336-hgfpomq848fmnibuctv26ojlv6kjet95.apps.googleusercontent.com</string>
-        </array>
-      </dict>
-      <dict>
-        <key>CFBundleURLSchemes</key>
-        <array>
           <string>com.googleusercontent.apps.343809534930-qmdjjacb9c2m436rv18ckpu5mo076vgj</string>
+          <string>fb$(EXPO_PUBLIC_FACEBOOK_APP_ID)</string>
         </array>
       </dict>
       <dict>
@@ -53,6 +42,10 @@
     </array>
     <key>CFBundleVersion</key>
     <string>1</string>
+    <key>FacebookAppID</key>
+    <string>$(EXPO_PUBLIC_FACEBOOK_APP_ID)</string>
+    <key>FacebookDisplayName</key>
+    <string>Sacred</string>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>LSMinimumSystemVersion</key>
