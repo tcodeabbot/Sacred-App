@@ -2,13 +2,13 @@ const { withPodfile } = require('@expo/config-plugins');
 
 /**
  * Configure Podfile for React Native Firebase compatibility
- * Adds static frameworks and modular headers required for Firebase Swift pods
+ * Adds static frameworks variable required for Firebase pods
  */
 const withModularHeaders = (config) => {
   return withPodfile(config, (config) => {
     const podfile = config.modResults;
 
-    // Add Firebase static framework variable before target block
+    // Add Firebase static framework variable before platform declaration
     if (!podfile.contents.includes('$RNFirebaseAsStaticFramework')) {
       podfile.contents = podfile.contents.replace(
         /platform :ios/,
@@ -16,11 +16,18 @@ const withModularHeaders = (config) => {
       );
     }
 
-    // Add use_modular_headers! and use_frameworks! after use_expo_modules!
-    if (!podfile.contents.includes('use_modular_headers!')) {
+    // Ensure proper pod configuration for Firebase + Facebook SDK
+    // Add post_install hook modifications if not present
+    if (!podfile.contents.includes('build_settings[\'CLANG_CXX_LANGUAGE_STANDARD\']')) {
       podfile.contents = podfile.contents.replace(
-        /use_expo_modules!/g,
-        'use_expo_modules!\n  use_modular_headers!\n  use_frameworks! :linkage => :static'
+        /post_install do \|installer\|/,
+        `post_install do |installer|
+    # Fix for Firebase + FBSDK compatibility
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+      end
+    end`
       );
     }
 
@@ -29,3 +36,4 @@ const withModularHeaders = (config) => {
 };
 
 module.exports = withModularHeaders;
+
