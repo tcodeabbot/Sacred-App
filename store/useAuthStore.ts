@@ -101,15 +101,21 @@ export const useAuthStore = create<AuthState>((set) => ({
         throw new Error('No ID token received from Google');
       }
 
+      console.log('Google Sign-In successful, authenticating with Supabase...');
+      console.log('ID Token length:', response.data.idToken.length);
+
       // Sign in with Supabase using the Google ID token
       const { data, error } = await supabase.auth.signInWithIdToken({
         provider: 'google',
         token: response.data.idToken,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase authentication error:', error);
+        throw error;
+      }
 
-      console.log('Google sign-in successful:', data.user?.email);
+      console.log('Supabase authentication successful:', data.user?.email);
 
       set({
         user: data.user,
