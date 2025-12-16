@@ -78,8 +78,7 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#1a9b8e",
-          "sounds": ["./assets/sounds/prayer-bell.mp3"]
+          "color": "#1a9b8e"
         }
       ]
     ],
