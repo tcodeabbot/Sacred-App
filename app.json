@@ -73,6 +73,14 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps.683144712792-pm424l46g84haghs1goddmodhr8m0sb2"
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#1a9b8e",
+          "sounds": ["./assets/sounds/prayer-bell.mp3"]
+        }
       ]
     ],
     "experiments": {
