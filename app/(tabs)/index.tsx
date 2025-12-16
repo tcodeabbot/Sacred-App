@@ -12,11 +12,13 @@ import { EncouragementText } from '@/components/home/EncouragementText';
 import { StreakCard } from '@/components/home/StreakCard';
 import { colors } from '@/constants/colors';
 import { useAppStore } from '@/store/useAppStore';
+import { usePrayerStore } from '@/store/usePrayerStore';
 import { blockedApps } from '@/constants/prayers';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { stats, todaysPrayers, settings, triggerIntercept, updateSettings } = useAppStore();
+  const { showLockScreen } = usePrayerStore();
   const [showGoalPicker, setShowGoalPicker] = useState(false);
 
   const todayCount = todaysPrayers.length;
@@ -107,6 +109,14 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.actionTitle}>Pray Now</Text>
             <Text style={styles.actionSubtitle}>2 min</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionCard} onPress={() => showLockScreen('Morning Prayer')}>
+            <View style={[styles.actionIcon, { backgroundColor: 'rgba(26, 155, 142, 0.2)' }]}>
+              <Ionicons name="lock-closed" size={26} color={colors.accent.teal} />
+            </View>
+            <Text style={styles.actionTitle}>Test Lock</Text>
+            <Text style={styles.actionSubtitle}>Try it</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionCard}>

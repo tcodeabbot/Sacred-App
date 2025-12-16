@@ -1,17 +1,51 @@
 import { useEffect } from 'react';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet } from 'react-native';
 import { colors } from '@/constants/colors';
 import { useAuthStore } from '@/store/useAuthStore';
+import { usePrayerStore } from '@/store/usePrayerStore';
+import { PrayerLockScreen } from '@/components/PrayerLockScreen';
+import { useAppStore } from '@/store/useAppStore';
+import {
+  addNotificationResponseListener,
+  addNotificationReceivedListener,
+} from '@/services/notificationService';
 
 export default function RootLayout() {
+  const router = useRouter();
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
+  const { initialize, showLockScreen, isLockScreenVisible, hideLockScreen, currentScheduleName } = usePrayerStore();
+  const { blockedApps } = useAppStore();
 
   useEffect(() => {
-    // Initialize Firebase auth listener
+    // Initialize auth
     initializeAuth();
+
+    // Initialize prayer schedules and notifications
+    initialize();
+
+    // Listen for notification taps (when app is in background)
+    const subscription1 = addNotificationResponseListener((response) => {
+      const data = response.notification.request.content.data;
+      if (data.type === 'prayer-reminder') {
+        showLockScreen(data.scheduleName as string);
+      }
+    });
+
+    // Listen for notifications when app is in foreground
+    const subscription2 = addNotificationReceivedListener((notification) => {
+      const data = notification.request.content.data;
+      if (data.type === 'prayer-reminder') {
+        showLockScreen(data.scheduleName as string);
+      }
+    });
+
+    return () => {
+      subscription1.remove();
+      subscription2.remove();
+    };
   }, []);
 
   return (
@@ -35,6 +69,17 @@ export default function RootLayout() {
           }}
         />
       </Stack>
+
+      {/* Prayer Lock Screen - Shows when it's prayer time */}
+      <PrayerLockScreen
+        visible={isLockScreenVisible}
+        onDismiss={hideLockScreen}
+        onStartPrayer={() => {
+          router.push('/prayer-session');
+        }}
+        scheduleName={currentScheduleName || undefined}
+        blockedApps={blockedApps.filter(app => app.isBlocked).map(app => app.name)}
+      />
     </GestureHandlerRootView>
   );
 }
