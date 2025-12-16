@@ -1,17 +1,19 @@
 import { create } from 'zustand';
-import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import { supabase } from '@/config/supabase';
+import { Session, User } from '@supabase/supabase-js';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { Platform } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { LoginManager, AccessToken } from 'react-native-fbsdk-next';
 
 // Configure Google Sign-In
 GoogleSignin.configure({
   webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
 });
 
 interface AuthState {
-  user: FirebaseAuthTypes.User | null;
+  user: User | null;
+  session: Session | null;
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
@@ -20,7 +22,6 @@ interface AuthState {
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
-  signInWithFacebook: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
   clearError: () => void;
@@ -29,6 +30,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
+  session: null,
   loading: false,
   error: null,
   isAuthenticated: false,
@@ -36,15 +38,23 @@ export const useAuthStore = create<AuthState>((set) => ({
   signInWithEmail: async (email: string, password: string) => {
     try {
       set({ loading: true, error: null });
-      const userCredential = await auth().signInWithEmailAndPassword(email, password);
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
       set({
-        user: userCredential.user,
+        user: data.user,
+        session: data.session,
         isAuthenticated: true,
         loading: false,
         error: null,
       });
     } catch (error: any) {
-      const errorMessage = getAuthErrorMessage(error.code);
+      const errorMessage = getAuthErrorMessage(error.message || error.code);
       set({ error: errorMessage, loading: false });
       throw error;
     }
@@ -53,15 +63,23 @@ export const useAuthStore = create<AuthState>((set) => ({
   signUpWithEmail: async (email: string, password: string) => {
     try {
       set({ loading: true, error: null });
-      const userCredential = await auth().createUserWithEmailAndPassword(email, password);
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
       set({
-        user: userCredential.user,
+        user: data.user,
+        session: data.session,
         isAuthenticated: true,
         loading: false,
         error: null,
       });
     } catch (error: any) {
-      const errorMessage = getAuthErrorMessage(error.code);
+      const errorMessage = getAuthErrorMessage(error.message || error.code);
       set({ error: errorMessage, loading: false });
       throw error;
     }
@@ -71,8 +89,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true, error: null });
 
     try {
-      // Check if Google Play services are available
-      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      // Check if Google Play services are available (Android only)
+      if (Platform.OS === 'android') {
+        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      }
 
       // Sign in with Google
       const response = await GoogleSignin.signIn();
@@ -81,16 +101,19 @@ export const useAuthStore = create<AuthState>((set) => ({
         throw new Error('No ID token received from Google');
       }
 
-      // Create a Google credential with the token
-      const googleCredential = auth.GoogleAuthProvider.credential(response.data.idToken);
+      // Sign in with Supabase using the Google ID token
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'google',
+        token: response.data.idToken,
+      });
 
-      // Sign in with the credential
-      const userCredential = await auth().signInWithCredential(googleCredential);
+      if (error) throw error;
 
-      console.log('Google sign-in successful:', userCredential.user.email);
+      console.log('Google sign-in successful:', data.user?.email);
 
       set({
-        user: userCredential.user,
+        user: data.user,
+        session: data.session,
         isAuthenticated: true,
         loading: false,
         error: null,
@@ -106,62 +129,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
 
       const errorMessage = error.message || 'Failed to sign in with Google';
-      set({ error: errorMessage, loading: false });
-      throw error;
-    }
-  },
-
-  signInWithFacebook: async () => {
-    set({ loading: true, error: null });
-
-    try {
-      console.log('Initializing Facebook Sign-In...');
-
-      // Attempt login with permissions
-      const result = await LoginManager.logInWithPermissions(['public_profile', 'email']);
-
-      if (result.isCancelled) {
-        console.log('Facebook sign-in cancelled by user');
-        set({ loading: false });
-        return;
-      }
-
-      console.log('Facebook login successful, getting access token...');
-
-      // Get the access token
-      const data = await AccessToken.getCurrentAccessToken();
-
-      if (!data) {
-        throw new Error('Failed to get Facebook access token');
-      }
-
-      console.log('Creating Facebook credential for Firebase...');
-
-      // Create a Facebook credential with the token
-      const facebookCredential = auth.FacebookAuthProvider.credential(data.accessToken);
-
-      // Sign in with the credential
-      const userCredential = await auth().signInWithCredential(facebookCredential);
-
-      console.log('Facebook sign-in successful:', userCredential.user.email);
-
-      set({
-        user: userCredential.user,
-        isAuthenticated: true,
-        loading: false,
-        error: null,
-      });
-    } catch (error: any) {
-      console.error('Facebook Sign-In Error:', error);
-
-      // Handle user cancellation gracefully
-      if (error.code === 'auth/account-exists-with-different-credential') {
-        const errorMessage = 'An account already exists with the same email address but different sign-in credentials';
-        set({ error: errorMessage, loading: false });
-        throw new Error(errorMessage);
-      }
-
-      const errorMessage = error.message || 'Failed to sign in with Facebook';
       set({ error: errorMessage, loading: false });
       throw error;
     }
@@ -194,21 +161,21 @@ export const useAuthStore = create<AuthState>((set) => ({
         ],
       });
 
-      console.log('Apple authentication successful, signing in to Firebase...');
+      console.log('Apple authentication successful, signing in to Supabase...');
 
-      // Create an Apple credential
-      const appleCredential = auth.AppleAuthProvider.credential(
-        credential.identityToken!,
-        credential.authorizationCode!
-      );
+      // Sign in with Supabase using Apple credentials
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: credential.identityToken!,
+      });
 
-      // Sign in with the credential
-      const userCredential = await auth().signInWithCredential(appleCredential);
+      if (error) throw error;
 
-      console.log('Apple sign-in successful:', userCredential.user.email);
+      console.log('Apple sign-in successful:', data.user?.email);
 
       set({
-        user: userCredential.user,
+        user: data.user,
+        session: data.session,
         isAuthenticated: true,
         loading: false,
         error: null,
@@ -221,7 +188,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         set({ loading: false });
         return;
       }
-      const errorMessage = getAuthErrorMessage(error.code) || error.message || 'Failed to sign in with Apple';
+      const errorMessage = error.message || 'Failed to sign in with Apple';
       set({ error: errorMessage, loading: false });
       throw error;
     }
@@ -239,19 +206,14 @@ export const useAuthStore = create<AuthState>((set) => ({
         console.log('Google sign out skipped (not signed in)');
       }
 
-      // Sign out from Facebook if previously signed in
-      try {
-        LoginManager.logOut();
-      } catch (error) {
-        // Ignore if not signed in
-        console.log('Facebook sign out skipped (not signed in)');
-      }
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
 
-      // Sign out from Firebase
-      await auth().signOut();
+      if (error) throw error;
 
       set({
         user: null,
+        session: null,
         isAuthenticated: false,
         loading: false,
         error: null,
@@ -266,46 +228,60 @@ export const useAuthStore = create<AuthState>((set) => ({
   clearError: () => set({ error: null }),
 
   initializeAuth: () => {
-    // Listen to auth state changes
-    const unsubscribe = auth().onAuthStateChanged((user) => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
       set({
-        user,
-        isAuthenticated: !!user,
+        user: session?.user ?? null,
+        session: session,
+        isAuthenticated: !!session,
         loading: false,
       });
     });
 
-    // Return unsubscribe function if needed
-    return unsubscribe;
+    // Listen to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      set({
+        user: session?.user ?? null,
+        session: session,
+        isAuthenticated: !!session,
+        loading: false,
+      });
+    });
+
+    // Return unsubscribe function
+    return () => subscription.unsubscribe();
   },
 }));
 
-// Helper function to convert Firebase error codes to user-friendly messages
-function getAuthErrorMessage(errorCode: string): string {
-  switch (errorCode) {
-    case 'auth/invalid-email':
-      return 'Invalid email address';
-    case 'auth/user-disabled':
-      return 'This account has been disabled';
-    case 'auth/user-not-found':
-      return 'No account found with this email';
-    case 'auth/wrong-password':
-      return 'Incorrect password';
-    case 'auth/email-already-in-use':
-      return 'An account already exists with this email';
-    case 'auth/weak-password':
-      return 'Password should be at least 6 characters';
-    case 'auth/operation-not-allowed':
-      return 'This sign-in method is not enabled';
-    case 'auth/invalid-credential':
-      return 'Invalid credentials. Please try again';
-    case 'auth/account-exists-with-different-credential':
-      return 'An account already exists with the same email address but different sign-in credentials';
-    case 'auth/network-request-failed':
-      return 'Network error. Please check your connection';
-    case 'auth/too-many-requests':
-      return 'Too many unsuccessful login attempts. Please try again later';
-    default:
-      return 'An error occurred. Please try again';
+// Helper function to convert Supabase error messages to user-friendly messages
+function getAuthErrorMessage(errorMessage: string): string {
+  // Supabase uses error messages instead of error codes
+  const lowerError = errorMessage.toLowerCase();
+
+  if (lowerError.includes('invalid login credentials')) {
+    return 'Invalid email or password';
   }
+  if (lowerError.includes('email not confirmed')) {
+    return 'Please verify your email address';
+  }
+  if (lowerError.includes('user already registered')) {
+    return 'An account already exists with this email';
+  }
+  if (lowerError.includes('password should be at least')) {
+    return 'Password should be at least 6 characters';
+  }
+  if (lowerError.includes('invalid email')) {
+    return 'Invalid email address';
+  }
+  if (lowerError.includes('user not found')) {
+    return 'No account found with this email';
+  }
+  if (lowerError.includes('email rate limit exceeded')) {
+    return 'Too many attempts. Please try again later';
+  }
+  if (lowerError.includes('network')) {
+    return 'Network error. Please check your connection';
+  }
+
+  return errorMessage || 'An error occurred. Please try again';
 }

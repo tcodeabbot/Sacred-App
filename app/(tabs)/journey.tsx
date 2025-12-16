@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/components/ui/Card';
 import { colors } from '@/constants/colors';
 import { useAppStore } from '@/store/useAppStore';
@@ -60,37 +61,37 @@ export default function JourneyScreen() {
         <View style={styles.statsGrid}>
           <Card style={styles.statCard}>
             <View style={[styles.statIcon, { backgroundColor: 'rgba(245, 158, 11, 0.2)' }]}>
-              <Text style={styles.statEmoji}>🔥</Text>
+              <Ionicons name="flame" size={24} color="#F59E0B" />
             </View>
             <Text style={[styles.statNumber, { color: colors.accent.amber }]}>
               {stats.currentStreak}
             </Text>
             <Text style={styles.statLabel}>day streak</Text>
           </Card>
-          
+
           <Card style={styles.statCard}>
             <View style={[styles.statIcon, { backgroundColor: 'rgba(13, 148, 136, 0.2)' }]}>
-              <Text style={styles.statEmoji}>⏱️</Text>
+              <Ionicons name="time-outline" size={24} color="#0D9488" />
             </View>
             <Text style={[styles.statNumber, { color: colors.accent.teal }]}>
               {formatTime(stats.totalMinutes)}
             </Text>
             <Text style={styles.statLabel}>with God</Text>
           </Card>
-          
+
           <Card style={styles.statCard}>
             <View style={[styles.statIcon, { backgroundColor: 'rgba(124, 58, 237, 0.2)' }]}>
-              <Text style={styles.statEmoji}>🙏</Text>
+              <Ionicons name="flower-outline" size={24} color="#7C3AED" />
             </View>
             <Text style={[styles.statNumber, { color: colors.accent.purple }]}>
               {stats.totalPrayers}
             </Text>
             <Text style={styles.statLabel}>total pauses</Text>
           </Card>
-          
+
           <Card style={styles.statCard}>
             <View style={[styles.statIcon, { backgroundColor: 'rgba(59, 130, 246, 0.2)' }]}>
-              <Text style={styles.statEmoji}>📱</Text>
+              <Ionicons name="apps-outline" size={24} color="#3B82F6" />
             </View>
             <Text style={[styles.statNumber, { color: colors.accent.blue }]}>
               {blockedCount}
@@ -105,7 +106,7 @@ export default function JourneyScreen() {
             <Text style={styles.longestStreakLabel}>Longest Streak</Text>
             <Text style={styles.longestStreakValue}>{stats.longestStreak} days</Text>
           </View>
-          <Text style={styles.trophyEmoji}>🏆</Text>
+          <Ionicons name="trophy-outline" size={44} color="#F59E0B" />
         </Card>
       </ScrollView>
     </SafeAreaView>
@@ -196,9 +197,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 12,
   },
-  statEmoji: {
-    fontSize: 20,
-  },
   statNumber: {
     fontSize: 28,
     fontWeight: 'bold',
@@ -224,8 +222,5 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: colors.text.primary,
-  },
-  trophyEmoji: {
-    fontSize: 40,
   },
 });

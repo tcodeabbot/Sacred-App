@@ -2,7 +2,4 @@
   <string name="app_name">Sacred</string>
   <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
   <string name="expo_splash_screen_status_bar_translucent" translatable="false">false</string>
-  <string name="facebook_app_id">930460469412108</string>
-  <string name="facebook_client_token">2bbc2f2079743e48a80521388c2d480f</string>
-  <string name="fb_login_protocol_scheme">fb930460469412108</string>
 </resources>

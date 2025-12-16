@@ -1,17 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/components/ui/Card';
+import { ProgressRing } from '@/components/ui/ProgressRing';
+import { BottomSheet } from '@/components/ui/BottomSheet';
+import { GoalPicker } from '@/components/ui/GoalPicker';
+import { EncouragementText } from '@/components/home/EncouragementText';
+import { StreakCard } from '@/components/home/StreakCard';
 import { colors } from '@/constants/colors';
 import { useAppStore } from '@/store/useAppStore';
 import { blockedApps } from '@/constants/prayers';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { stats, todaysPrayers, settings, triggerIntercept } = useAppStore();
-  
+  const { stats, todaysPrayers, settings, triggerIntercept, updateSettings } = useAppStore();
+  const [showGoalPicker, setShowGoalPicker] = useState(false);
+
   const todayCount = todaysPrayers.length;
   
   const formatTime = (date: Date) => {
@@ -37,6 +44,11 @@ export default function HomeScreen() {
     }
     router.push('/(modals)/intercept');
   };
+
+  const handleGoalChange = (newGoal: number) => {
+    updateSettings({ dailyGoal: newGoal });
+    setShowGoalPicker(false);
+  };
   
   return (
     <SafeAreaView style={styles.container}>
@@ -46,47 +58,60 @@ export default function HomeScreen() {
           <Text style={styles.title}>Sacred</Text>
           <View style={styles.headerButtons}>
             <TouchableOpacity style={styles.iconButton}>
-              <Text style={styles.iconEmoji}>🔔</Text>
+              <Ionicons name="notifications-outline" size={22} color={colors.text.primary} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconButton}>
-              <Text style={styles.iconEmoji}>⚙️</Text>
+              <Ionicons name="settings-outline" size={22} color={colors.text.primary} />
             </TouchableOpacity>
           </View>
         </View>
         
         {/* Hero Card */}
         <Card gradient={colors.gradients.teal} style={styles.heroCard}>
-          <View style={styles.heroDecor}>
-            <View style={styles.heroCircle1} />
-            <View style={styles.heroCircle2} />
-          </View>
-          
           <View style={styles.heroContent}>
             <Text style={styles.heroLabel}>Today's Prayers</Text>
-            <View style={styles.heroCount}>
-              <Text style={styles.heroNumber}>{todayCount}</Text>
-              <Text style={styles.heroGoal}>/ {settings.dailyGoal} goal</Text>
-            </View>
-            
-            <View style={styles.streakBadge}>
-              <Text style={styles.streakText}>🔥 {stats.currentStreak} day streak</Text>
+
+            <EncouragementText current={todayCount} goal={settings.dailyGoal} />
+
+            <View style={styles.progressContainer}>
+              <ProgressRing
+                progress={todayCount / settings.dailyGoal}
+                size={180}
+                strokeWidth={12}
+              >
+                <View style={styles.progressContent}>
+                  <Text style={styles.progressNumber}>{todayCount}</Text>
+                  <TouchableOpacity onPress={() => setShowGoalPicker(true)}>
+                    <Text style={styles.progressGoal}>of {settings.dailyGoal}</Text>
+                  </TouchableOpacity>
+                </View>
+              </ProgressRing>
             </View>
           </View>
         </Card>
+
+        {/* Streak Card */}
+        <StreakCard
+          currentStreak={stats.currentStreak}
+          bestStreak={stats.bestStreak}
+          consecutiveGraceDays={stats.consecutiveGraceDays}
+          maxConsecutiveGraceDays={settings.maxConsecutiveGraceDays}
+          graceDaysEnabled={settings.graceDaysEnabled}
+        />
         
         {/* Quick Actions */}
         <View style={styles.quickActions}>
           <TouchableOpacity style={styles.actionCard} onPress={handlePrayNow}>
             <View style={[styles.actionIcon, { backgroundColor: 'rgba(245, 158, 11, 0.2)' }]}>
-              <Text style={styles.actionEmoji}>🙏</Text>
+              <Ionicons name="flower-outline" size={26} color="#F59E0B" />
             </View>
             <Text style={styles.actionTitle}>Pray Now</Text>
             <Text style={styles.actionSubtitle}>2 min</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.actionCard}>
             <View style={[styles.actionIcon, { backgroundColor: 'rgba(124, 58, 237, 0.2)' }]}>
-              <Text style={styles.actionEmoji}>📖</Text>
+              <Ionicons name="book-outline" size={26} color="#7C3AED" />
             </View>
             <Text style={styles.actionTitle}>Scripture</Text>
             <Text style={styles.actionSubtitle}>Daily verse</Text>
@@ -108,7 +133,11 @@ export default function HomeScreen() {
               return (
                 <View key={prayer.id} style={styles.prayerItem}>
                   <View style={styles.prayerIcon}>
-                    <Text style={styles.prayerEmoji}>{app?.icon || '🙏'}</Text>
+                    <Ionicons
+                      name={app?.icon as any || 'flower-outline'}
+                      size={22}
+                      color={colors.text.primary}
+                    />
                   </View>
                   <View style={styles.prayerInfo}>
                     <Text style={styles.prayerTime}>{formatTime(prayer.startedAt)}</Text>
@@ -123,6 +152,26 @@ export default function HomeScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Goal Picker Bottom Sheet */}
+      <BottomSheet
+        isVisible={showGoalPicker}
+        onClose={() => setShowGoalPicker(false)}
+        snapPoint={0.5}
+      >
+        <View style={styles.bottomSheetContent}>
+          <Text style={styles.bottomSheetTitle}>Daily Goal</Text>
+          <Text style={styles.bottomSheetSubtitle}>
+            How many prayers would you like to complete daily?
+          </Text>
+          <GoalPicker
+            value={settings.dailyGoal}
+            onChange={handleGoalChange}
+            min={1}
+            max={20}
+          />
+        </View>
+      </BottomSheet>
     </SafeAreaView>
   );
 }
@@ -160,72 +209,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconEmoji: {
-    fontSize: 20,
-  },
   heroCard: {
     marginBottom: 24,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  heroDecor: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-  },
-  heroCircle1: {
-    position: 'absolute',
-    top: -20,
-    right: -20,
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-  },
-  heroCircle2: {
-    position: 'absolute',
-    top: 20,
-    right: 40,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    alignItems: 'center',
   },
   heroContent: {
-    position: 'relative',
-    zIndex: 1,
+    alignItems: 'center',
+    width: '100%',
   },
   heroLabel: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
-    marginBottom: 4,
+    color: 'rgba(255,255,255,0.8)',
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    fontWeight: '600',
   },
-  heroCount: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 16,
+  progressContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  heroNumber: {
-    fontSize: 56,
+  progressContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressNumber: {
+    fontSize: 48,
     fontWeight: 'bold',
     color: '#ffffff',
   },
-  heroGoal: {
-    fontSize: 18,
-    color: 'rgba(255,255,255,0.5)',
-    marginLeft: 8,
-  },
-  streakBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  streakText: {
-    color: '#ffffff',
-    fontWeight: '600',
-    fontSize: 15,
+  progressGoal: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 4,
+    textDecorationLine: 'underline',
   },
   quickActions: {
     flexDirection: 'row',
@@ -246,9 +263,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
-  },
-  actionEmoji: {
-    fontSize: 24,
   },
   actionTitle: {
     fontSize: 16,
@@ -298,9 +312,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 14,
   },
-  prayerEmoji: {
-    fontSize: 20,
-  },
   prayerInfo: {
     flex: 1,
   },
@@ -316,5 +327,22 @@ const styles = StyleSheet.create({
   prayerDuration: {
     fontSize: 14,
     color: colors.text.secondary,
+  },
+  bottomSheetContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+  },
+  bottomSheetTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text.primary,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  bottomSheetSubtitle: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    marginBottom: 24,
+    textAlign: 'center',
   },
 });

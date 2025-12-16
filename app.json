@@ -17,25 +17,21 @@
       "**/*"
     ],
     "ios": {
-      "googleServicesFile": "./GoogleService-Info.plist",
       "supportsTablet": true,
       "bundleIdentifier": "com.eidos.sacred-mobile-app",
       "infoPlist": {
         "CFBundleURLTypes": [
           {
             "CFBundleURLSchemes": [
-              "com.googleusercontent.apps.343809534930-qmdjjacb9c2m436rv18ckpu5mo076vgj",
-              "fb$(EXPO_PUBLIC_FACEBOOK_APP_ID)"
+              "com.googleusercontent.apps.683144712792-pm424l46g84haghs1goddmodhr8m0sb2",
+              "sacred"
             ]
           }
         ],
-        "ITSAppUsesNonExemptEncryption": false,
-        "FacebookAppID": "$(EXPO_PUBLIC_FACEBOOK_APP_ID)",
-        "FacebookDisplayName": "Sacred"
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0d0d0d"
@@ -75,23 +71,9 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosUrlScheme": "com.googleusercontent.apps.343809534930-qmdjjacb9c2m436rv18ckpu5mo076vgj"
+          "iosUrlScheme": "com.googleusercontent.apps.683144712792-pm424l46g84haghs1goddmodhr8m0sb2"
         }
-      ],
-      [
-        "react-native-fbsdk-next",
-        {
-          "appID": "930460469412108",
-          "clientToken": "2bbc2f2079743e48a80521388c2d480f",
-          "displayName": "Sacred",
-          "scheme": "fb930460469412108",
-          "advertiserIDCollectionEnabled": false,
-          "autoLogAppEventsEnabled": false,
-          "isAutoInitEnabled": true
-        }
-      ],
-      "@react-native-firebase/app",
-      "@react-native-firebase/auth"
+      ]
     ],
     "experiments": {
       "typedRoutes": true

@@ -104,7 +104,7 @@ export function Button({
         activeOpacity={0.9}
       >
         <LinearGradient
-          colors={gradient as unknown as string[]}
+          colors={gradient as readonly [string, string, ...string[]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={[styles.button, styles.gradientButton, disabled && styles.disabled]}

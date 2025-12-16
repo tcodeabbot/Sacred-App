@@ -14,7 +14,7 @@ export function Card({ children, style, gradient, padding = 20 }: CardProps) {
   if (gradient) {
     return (
       <LinearGradient
-        colors={gradient as unknown as string[]}
+        colors={gradient as readonly [string, string, ...string[]]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.card, { padding }, style]}

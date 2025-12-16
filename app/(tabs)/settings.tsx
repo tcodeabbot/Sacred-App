@@ -2,26 +2,29 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/colors';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
 
 interface SettingsRowProps {
-  icon: string;
+  iconName: string;
   label: string;
   value?: string;
   highlight?: boolean;
   onPress?: () => void;
 }
 
-function SettingsRow({ icon, label, value, highlight, onPress }: SettingsRowProps) {
+function SettingsRow({ iconName, label, value, highlight, onPress }: SettingsRowProps) {
   return (
     <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.7}>
-      <Text style={styles.rowIcon}>{icon}</Text>
+      <View style={styles.rowIconContainer}>
+        <Ionicons name={iconName as any} size={22} color={colors.text.secondary} />
+      </View>
       <Text style={[styles.rowLabel, highlight && styles.rowLabelHighlight]}>{label}</Text>
       <View style={styles.rowRight}>
         {value && <Text style={styles.rowValue}>{value}</Text>}
-        <Text style={styles.chevron}>›</Text>
+        <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
       </View>
     </TouchableOpacity>
   );
@@ -79,19 +82,19 @@ export default function SettingsScreen() {
           </View>
           <View style={styles.sectionContent}>
             <SettingsRow
-              icon="📱"
+              iconName="apps-outline"
               label="Apps to Pause"
               value={`${blockedCount} apps`}
             />
             <View style={styles.separator} />
             <SettingsRow
-              icon="⏱️"
+              iconName="time-outline"
               label="Pause Duration"
               value={getDurationLabel(settings.pauseDuration)}
             />
             <View style={styles.separator} />
             <SettingsRow
-              icon="🎯"
+              iconName="flag-outline"
               label="Daily Goal"
               value={`${settings.dailyGoal} times`}
             />
@@ -105,7 +108,7 @@ export default function SettingsScreen() {
           </View>
           <View style={styles.sectionContent}>
             <SettingsRow
-              icon="📖"
+              iconName="book-outline"
               label="Prayer Style"
               value={settings.prayerStyle.charAt(0).toUpperCase() + settings.prayerStyle.slice(1)}
             />
@@ -121,11 +124,13 @@ export default function SettingsScreen() {
             {user && (
               <>
                 <View style={styles.userInfoContainer}>
-                  <Text style={styles.userInfoIcon}>👤</Text>
+                  <View style={styles.userInfoIconContainer}>
+                    <Ionicons name="person-circle-outline" size={24} color={colors.text.secondary} />
+                  </View>
                   <View style={styles.userInfoText}>
                     <Text style={styles.userEmail}>{user.email}</Text>
-                    {user.displayName && (
-                      <Text style={styles.userDisplayName}>{user.displayName}</Text>
+                    {user.user_metadata?.full_name && (
+                      <Text style={styles.userDisplayName}>{user.user_metadata.full_name}</Text>
                     )}
                   </View>
                 </View>
@@ -133,18 +138,18 @@ export default function SettingsScreen() {
               </>
             )}
             <SettingsRow
-              icon="⭐"
+              iconName="star-outline"
               label="Upgrade to Premium"
               highlight
               onPress={() => router.push('/(modals)/upgrade')}
             />
             <View style={styles.separator} />
-            <SettingsRow icon="🔒" label="Privacy" />
+            <SettingsRow iconName="lock-closed-outline" label="Privacy" />
             <View style={styles.separator} />
-            <SettingsRow icon="❓" label="Help & Support" />
+            <SettingsRow iconName="help-circle-outline" label="Help & Support" />
             <View style={styles.separator} />
             <SettingsRow
-              icon="🚪"
+              iconName="log-out-outline"
               label={isSigningOut ? "Signing out..." : "Sign Out"}
               onPress={handleSignOut}
             />
@@ -157,11 +162,11 @@ export default function SettingsScreen() {
             <Text style={styles.sectionTitle}>ABOUT</Text>
           </View>
           <View style={styles.sectionContent}>
-            <SettingsRow icon="ℹ️" label="About Sacred" />
+            <SettingsRow iconName="information-circle-outline" label="About Sacred" />
             <View style={styles.separator} />
-            <SettingsRow icon="⭐" label="Rate the App" />
+            <SettingsRow iconName="star-outline" label="Rate the App" />
             <View style={styles.separator} />
-            <SettingsRow icon="📤" label="Share Sacred" />
+            <SettingsRow iconName="share-outline" label="Share Sacred" />
           </View>
         </View>
         
@@ -216,9 +221,11 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
   },
-  rowIcon: {
-    fontSize: 20,
+  rowIconContainer: {
+    width: 28,
     marginRight: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   rowLabel: {
     flex: 1,
@@ -231,14 +238,10 @@ const styles = StyleSheet.create({
   rowRight: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
   rowValue: {
     fontSize: 15,
-    color: colors.text.muted,
-    marginRight: 8,
-  },
-  chevron: {
-    fontSize: 20,
     color: colors.text.muted,
   },
   separator: {
@@ -252,9 +255,11 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
   },
-  userInfoIcon: {
-    fontSize: 20,
+  userInfoIconContainer: {
+    width: 28,
     marginRight: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   userInfoText: {
     flex: 1,

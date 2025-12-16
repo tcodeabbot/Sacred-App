@@ -24,7 +24,7 @@ export default function SignInScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const { signInWithEmail, signInWithGoogle, signInWithFacebook, signInWithApple, loading, error, clearError, isAuthenticated } = useAuthStore();
+  const { signInWithEmail, signInWithGoogle, signInWithApple, loading, error, clearError, isAuthenticated } = useAuthStore();
 
   // Navigate to home when authenticated
   useEffect(() => {
@@ -63,13 +63,6 @@ export default function SignInScreen() {
     }
   };
 
-  const handleFacebookSignIn = async () => {
-    try {
-      await signInWithFacebook();
-    } catch (error) {
-      // Error is handled in the store and shown via useEffect
-    }
-  };
 
   const handleAppleSignIn = async () => {
     try {
@@ -123,14 +116,6 @@ export default function SignInScreen() {
               >
                 <Ionicons name="logo-google" size={24} color="#EA4335" />
                 <Text style={styles.socialButtonText}>Google</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.socialButton}
-                onPress={handleFacebookSignIn}
-              >
-                <Ionicons name="logo-facebook" size={24} color="#1877F2" />
-                <Text style={styles.socialButtonText}>Facebook</Text>
               </TouchableOpacity>
 
               <TouchableOpacity

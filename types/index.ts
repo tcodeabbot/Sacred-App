@@ -10,7 +10,7 @@ export interface BlockedApp {
   id: string;
   name: string;
   icon: string;
-  gradient: string[];
+  gradient: readonly string[];
   isBlocked: boolean;
 }
 
@@ -21,6 +21,10 @@ export interface PrayerSession {
   duration: number;
   triggeredBy: string | null;
   completed: boolean;
+  mode?: 'silent' | 'scripture' | 'written';
+  journalEntry?: string;
+  intent?: string;
+  tags?: string[];
 }
 
 export interface UserSettings {
@@ -29,14 +33,20 @@ export interface UserSettings {
   frequency: 'once' | 'few' | 'every';
   prayerStyle: 'scripture' | 'guided' | 'silent';
   notificationsEnabled: boolean;
+  graceDaysEnabled: boolean;
+  maxGraceDays: number;
+  maxConsecutiveGraceDays: number;
 }
 
 export interface UserStats {
   currentStreak: number;
   longestStreak: number;
+  bestStreak: number;
   totalPrayers: number;
   totalMinutes: number;
   weeklyPrayers: number[];
+  graceDaysUsed: Date[];
+  consecutiveGraceDays: number;
 }
 
 export interface Prayer {
@@ -52,4 +62,24 @@ export interface Scripture {
   id: string;
   text: string;
   reference: string;
+  whyToday?: string;
+  theme?: string;
+}
+
+export interface ScriptureReflection {
+  id: string;
+  scriptureId: string;
+  text: string;
+  reference: string;
+  reflection: string;
+  createdAt: Date;
+  isFavorite: boolean;
+}
+
+export interface ScriptureSet {
+  id: string;
+  title: string;
+  scriptures: Scripture[];
+  duration: number;
+  gradient: 'teal' | 'purple' | 'amber' | 'blue' | 'pink';
 }
