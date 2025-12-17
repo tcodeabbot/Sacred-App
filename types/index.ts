@@ -10,6 +10,7 @@ export interface BlockedApp {
   id: string;
   name: string;
   icon: string;
+  iconUri?: string; // Real app icon URL
   gradient: readonly string[];
   isBlocked: boolean;
 }

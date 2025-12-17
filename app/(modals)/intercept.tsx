@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -19,17 +19,17 @@ import { scriptures } from '@/constants/prayers';
 export default function InterceptScreen() {
   const router = useRouter();
   const { interceptedApp, startPrayer, dismissIntercept } = useAppStore();
-  
+
   // Get random scripture
   const scripture = scriptures[Math.floor(Math.random() * scriptures.length)];
-  
+
   // Breathing animation
   const scale1 = useSharedValue(1);
   const scale2 = useSharedValue(1);
   const opacity1 = useSharedValue(0.3);
   const opacity2 = useSharedValue(0.2);
   const pulseOpacity = useSharedValue(1);
-  
+
   useEffect(() => {
     // Circle 1 animation
     scale1.value = withRepeat(
@@ -48,7 +48,7 @@ export default function InterceptScreen() {
       -1,
       false
     );
-    
+
     // Circle 2 animation (offset)
     scale2.value = withRepeat(
       withSequence(
@@ -66,7 +66,7 @@ export default function InterceptScreen() {
       -1,
       false
     );
-    
+
     // Pulse dot
     pulseOpacity.value = withRepeat(
       withSequence(
@@ -77,31 +77,31 @@ export default function InterceptScreen() {
       false
     );
   }, []);
-  
+
   const circle1Style = useAnimatedStyle(() => ({
     transform: [{ scale: scale1.value }],
     opacity: opacity1.value,
   }));
-  
+
   const circle2Style = useAnimatedStyle(() => ({
     transform: [{ scale: scale2.value }],
     opacity: opacity2.value,
   }));
-  
+
   const pulseStyle = useAnimatedStyle(() => ({
     opacity: pulseOpacity.value,
   }));
-  
+
   const handleBeginPrayer = () => {
     startPrayer(interceptedApp?.id);
     router.replace('/(modals)/active-prayer');
   };
-  
+
   const handleNotNow = () => {
     dismissIntercept();
     router.back();
   };
-  
+
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -115,30 +115,38 @@ export default function InterceptScreen() {
           <Animated.View style={[styles.orb, styles.orbOuter, circle1Style]} />
           <Animated.View style={[styles.orb, styles.orbInner, circle2Style]} />
         </View>
-        
+
         <SafeAreaView style={styles.safeArea}>
           {/* Blocked app indicator */}
           {interceptedApp && (
             <View style={styles.appIndicator}>
               <View style={styles.appIcon}>
-                <Text style={styles.appEmoji}>{interceptedApp.icon}</Text>
+                {interceptedApp.iconUri ? (
+                  <Image
+                    source={{ uri: interceptedApp.iconUri }}
+                    style={styles.appIconImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Text style={styles.appEmoji}>{interceptedApp.icon}</Text>
+                )}
               </View>
               <Text style={styles.appName}>{interceptedApp.name}</Text>
             </View>
           )}
-          
+
           {/* Scripture */}
           <View style={styles.content}>
             <Text style={styles.scripture}>"{scripture.text}"</Text>
             <Text style={styles.reference}>— {scripture.reference}</Text>
           </View>
-          
+
           {/* Duration indicator */}
           <View style={styles.durationContainer}>
             <Animated.View style={[styles.pulseDot, pulseStyle]} />
             <Text style={styles.durationText}>2 minute pause</Text>
           </View>
-          
+
           {/* Actions */}
           <View style={styles.actions}>
             <Button
@@ -205,6 +213,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  appIconImage: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
   },
   appEmoji: {
     fontSize: 16,
@@ -226,6 +240,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 44,
     marginBottom: 20,
+
   },
   reference: {
     fontSize: 18,

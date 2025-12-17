@@ -89,12 +89,48 @@ export const prayers = [
 ];
 
 export const blockedApps = [
-  { id: 'instagram', name: 'Instagram', icon: 'camera-outline', gradient: ['#E4405F', '#833AB4'] as const },
-  { id: 'tiktok', name: 'TikTok', icon: 'musical-notes-outline', gradient: ['#00f2ea', '#ff0050'] as const },
-  { id: 'twitter', name: 'Twitter', icon: 'logo-twitter', gradient: ['#1DA1F2', '#0d8bd9'] as const },
-  { id: 'youtube', name: 'YouTube', icon: 'logo-youtube', gradient: ['#FF0000', '#cc0000'] as const },
-  { id: 'reddit', name: 'Reddit', icon: 'logo-reddit', gradient: ['#FF4500', '#cc3700'] as const },
-  { id: 'facebook', name: 'Facebook', icon: 'logo-facebook', gradient: ['#1877F2', '#0d5abd'] as const },
+  {
+    id: 'instagram',
+    name: 'Instagram',
+    icon: 'camera-outline',
+    iconUri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Instagram_logo_2016.svg/2048px-Instagram_logo_2016.svg.png',
+    gradient: ['#E4405F', '#833AB4'] as const
+  },
+  {
+    id: 'tiktok',
+    name: 'TikTok',
+    icon: 'musical-notes-outline',
+    iconUri: 'https://sf16-website-login.neutral.ttwstatic.com/obj/tiktok_web_login_static/tiktok/webapp/main/webapp-desktop/8152caf0c8e8bc67ae0d.png',
+    gradient: ['#00f2ea', '#ff0050'] as const
+  },
+  {
+    id: 'twitter',
+    name: 'Twitter',
+    icon: 'logo-twitter',
+    iconUri: 'https://abs.twimg.com/responsive-web/client-web/icon-ios.b1fc7275.png',
+    gradient: ['#1DA1F2', '#0d8bd9'] as const
+  },
+  {
+    id: 'youtube',
+    name: 'YouTube',
+    icon: 'logo-youtube',
+    iconUri: 'https://www.youtube.com/s/desktop/6e27b58e/img/favicon_144x144.png',
+    gradient: ['#FF0000', '#cc0000'] as const
+  },
+  {
+    id: 'reddit',
+    name: 'Reddit',
+    icon: 'logo-reddit',
+    iconUri: 'https://www.redditstatic.com/desktop2x/img/favicon/apple-icon-180x180.png',
+    gradient: ['#FF4500', '#cc3700'] as const
+  },
+  {
+    id: 'facebook',
+    name: 'Facebook',
+    icon: 'logo-facebook',
+    iconUri: 'https://static.xx.fbcdn.net/rsrc.php/y1/r/4lCu2zih0ca.svg',
+    gradient: ['#1877F2', '#0d5abd'] as const
+  },
 ];
 
 // Prayer tags for categorizing pause intents

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -50,9 +50,17 @@ function AppCard({ app, isSelected, onToggle }: AppCardProps) {
         end={{ x: 1, y: 1 }}
         style={styles.appGradient}
       >
-        <Text style={styles.appIcon}>{app.icon}</Text>
+        {app.iconUri ? (
+          <Image
+            source={{ uri: app.iconUri }}
+            style={styles.appIconImage}
+            resizeMode="contain"
+          />
+        ) : (
+          <Text style={styles.appIcon}>{app.icon}</Text>
+        )}
         <Text style={styles.appName}>{app.name}</Text>
-        
+
         {isSelected && (
           <View style={styles.checkBadge}>
             <Text style={styles.checkText}>✓</Text>
@@ -158,6 +166,12 @@ const styles = StyleSheet.create({
   appIcon: {
     fontSize: 40,
     marginBottom: 8,
+  },
+  appIconImage: {
+    width: 64,
+    height: 64,
+    marginBottom: 8,
+    borderRadius: 12,
   },
   appName: {
     fontSize: 16,

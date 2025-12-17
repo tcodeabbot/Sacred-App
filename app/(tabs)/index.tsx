@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -143,11 +143,19 @@ export default function HomeScreen() {
               return (
                 <View key={prayer.id} style={styles.prayerItem}>
                   <View style={styles.prayerIcon}>
-                    <Ionicons
-                      name={app?.icon as any || 'flower-outline'}
-                      size={22}
-                      color={colors.text.primary}
-                    />
+                    {app?.iconUri ? (
+                      <Image
+                        source={{ uri: app.iconUri }}
+                        style={styles.prayerIconImage}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <Ionicons
+                        name={app?.icon as any || 'flower-outline'}
+                        size={22}
+                        color={colors.text.primary}
+                      />
+                    )}
                   </View>
                   <View style={styles.prayerInfo}>
                     <Text style={styles.prayerTime}>{formatTime(prayer.startedAt)}</Text>
@@ -321,6 +329,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
+    overflow: 'hidden',
+  },
+  prayerIconImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
   },
   prayerInfo: {
     flex: 1,
