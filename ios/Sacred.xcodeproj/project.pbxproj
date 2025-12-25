@@ -10,12 +10,12 @@
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
+		218407123361420199964E48 /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842624F291CF4B0095CAA4F3 /* noop-file.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
+		4F791472172FE4E09D704190 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 8D673B8656A7EB1D3DA30CA5 /* PrivacyInfo.xcprivacy */; };
+		9A1323F12A52D40227A2CA0D /* Pods_Sacred.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D9B140B69E06CA83AE3CDCE0 /* Pods_Sacred.framework */; };
 		B18059E884C0ABDD17F3DC3D /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		CB4D3F0E90534AFFA29FAAA9 /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCC565518BEA4C70B54FC288 /* noop-file.swift */; };
-		CF6D2547D94B241C7DE306FB /* Pods_Sacred.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CC54B80B407171F41BE7A198 /* Pods_Sacred.framework */; };
-		D3DE475617367D191DAA30C4 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 21756897318A8693B64D7635 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,14 +25,14 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Sacred/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Sacred/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = Sacred/main.m; sourceTree = "<group>"; };
-		21756897318A8693B64D7635 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Sacred/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		6C2E3173556A471DD304B334 /* Pods-Sacred.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Sacred.debug.xcconfig"; path = "Target Support Files/Pods-Sacred/Pods-Sacred.debug.xcconfig"; sourceTree = "<group>"; };
 		7A4D352CD337FB3A3BF06240 /* Pods-Sacred.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Sacred.release.xcconfig"; path = "Target Support Files/Pods-Sacred/Pods-Sacred.release.xcconfig"; sourceTree = "<group>"; };
+		842624F291CF4B0095CAA4F3 /* noop-file.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = "noop-file.swift"; path = "Sacred/noop-file.swift"; sourceTree = "<group>"; };
+		8D673B8656A7EB1D3DA30CA5 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Sacred/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Sacred/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		C9250159D163461B94CF49FD /* Sacred-Bridging-Header.h */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.h; name = "Sacred-Bridging-Header.h"; path = "Sacred/Sacred-Bridging-Header.h"; sourceTree = "<group>"; };
-		CC54B80B407171F41BE7A198 /* Pods_Sacred.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Sacred.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		CCC565518BEA4C70B54FC288 /* noop-file.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = "noop-file.swift"; path = "Sacred/noop-file.swift"; sourceTree = "<group>"; };
+		BBF3CDBA6B74449FBC3B706B /* Sacred-Bridging-Header.h */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.h; name = "Sacred-Bridging-Header.h"; path = "Sacred/Sacred-Bridging-Header.h"; sourceTree = "<group>"; };
+		D9B140B69E06CA83AE3CDCE0 /* Pods_Sacred.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Sacred.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Sacred/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -42,7 +42,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CF6D2547D94B241C7DE306FB /* Pods_Sacred.framework in Frameworks */,
+				9A1323F12A52D40227A2CA0D /* Pods_Sacred.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -59,9 +59,9 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				13B07FB71A68108700A75B9A /* main.m */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				CCC565518BEA4C70B54FC288 /* noop-file.swift */,
-				C9250159D163461B94CF49FD /* Sacred-Bridging-Header.h */,
-				21756897318A8693B64D7635 /* PrivacyInfo.xcprivacy */,
+				842624F291CF4B0095CAA4F3 /* noop-file.swift */,
+				BBF3CDBA6B74449FBC3B706B /* Sacred-Bridging-Header.h */,
+				8D673B8656A7EB1D3DA30CA5 /* PrivacyInfo.xcprivacy */,
 			);
 			name = Sacred;
 			sourceTree = "<group>";
@@ -70,7 +70,7 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				CC54B80B407171F41BE7A198 /* Pods_Sacred.framework */,
+				D9B140B69E06CA83AE3CDCE0 /* Pods_Sacred.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -147,13 +147,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Sacred" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				33D3127F88AF110264CAD2E5 /* [Expo] Configure project */,
+				778F08E787921C4F6CF2DA92 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				24EF5274BB30767412DB0D8F /* [CP] Embed Pods Frameworks */,
+				09C5D8E038DF61C6F6EB8648 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -203,7 +203,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				D3DE475617367D191DAA30C4 /* PrivacyInfo.xcprivacy in Resources */,
+				4F791472172FE4E09D704190 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -247,7 +247,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		24EF5274BB30767412DB0D8F /* [CP] Embed Pods Frameworks */ = {
+		09C5D8E038DF61C6F6EB8648 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -265,7 +265,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Sacred/Pods-Sacred-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		33D3127F88AF110264CAD2E5 /* [Expo] Configure project */ = {
+		778F08E787921C4F6CF2DA92 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -348,7 +348,7 @@
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				B18059E884C0ABDD17F3DC3D /* ExpoModulesProvider.swift in Sources */,
-				CB4D3F0E90534AFFA29FAAA9 /* noop-file.swift in Sources */,
+				218407123361420199964E48 /* noop-file.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
