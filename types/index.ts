@@ -34,6 +34,26 @@ export interface PrayerScheduleItem {
   time: string; // Format: "HH:mm" (24-hour)
   duration: number; // Duration in minutes
   enabled: boolean;
+  selectedPrayerId?: string; // Reference to user's prayer to display during session
+}
+
+export interface PrayerCollection {
+  id: string;
+  name: string;
+  description?: string;
+  color: 'teal' | 'purple' | 'amber' | 'blue' | 'pink';
+  sortOrder: number;
+}
+
+export interface UserPrayer {
+  id: string;
+  collectionId?: string;
+  title: string;
+  excerpt: string;
+  fullText?: string;
+  isFavorite: boolean;
+  sortOrder: number;
+  createdAt: Date;
 }
 
 export interface UserSettings {

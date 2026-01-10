@@ -7,12 +7,14 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { colors } from '@/constants/colors';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { PrayerScheduleItem } from '@/types';
+import { PrayerScheduleItem, UserPrayer } from '@/types';
 import {
   getPrayerSchedule,
   createPrayerScheduleItem,
   updatePrayerScheduleItem,
   deletePrayerScheduleItem,
+  getUserPrayers,
+  getUserPrayerById,
 } from '@/lib/database';
 
 export default function PrayerScheduleScreen() {
@@ -26,10 +28,12 @@ export default function PrayerScheduleScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [schedule, setSchedule] = useState<PrayerScheduleItem[]>(settings.prayerSchedule);
+  const [userPrayers, setUserPrayers] = useState<UserPrayer[]>([]);
+  const [selectingPrayerFor, setSelectingPrayerFor] = useState<string | null>(null);
 
   // Fetch prayer schedule from database on mount
   useEffect(() => {
-    const fetchSchedule = async () => {
+    const fetchData = async () => {
       if (!user?.id) {
         // Use local settings if not authenticated
         setIsLoading(false);
@@ -38,19 +42,23 @@ export default function PrayerScheduleScreen() {
 
       try {
         setIsLoading(true);
-        const data = await getPrayerSchedule(user.id);
-        setSchedule(data);
+        const [scheduleData, prayersData] = await Promise.all([
+          getPrayerSchedule(user.id),
+          getUserPrayers(user.id),
+        ]);
+        setSchedule(scheduleData);
+        setUserPrayers(prayersData);
         // Also update local store to keep in sync
-        updateSettings({ prayerSchedule: data });
+        updateSettings({ prayerSchedule: scheduleData });
       } catch (error) {
-        console.error('Error fetching prayer schedule:', error);
+        console.error('Error fetching data:', error);
         // Keep using initial local settings on error
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchSchedule();
+    fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]); // Only re-fetch when user changes
 
@@ -109,6 +117,34 @@ export default function PrayerScheduleScreen() {
       ]
     );
   };
+
+  const handleSelectPrayer = async (scheduleItemId: string, selectedPrayerId: string | undefined) => {
+    // Optimistically update UI
+    const updatedSchedule = schedule.map(item =>
+      item.id === scheduleItemId ? { ...item, selectedPrayerId } : item
+    );
+    setSchedule(updatedSchedule);
+    updateSettings({ prayerSchedule: updatedSchedule });
+    setSelectingPrayerFor(null);
+
+    // Sync with database
+    if (user?.id) {
+      try {
+        await updatePrayerScheduleItem(scheduleItemId, { selectedPrayerId });
+      } catch (error) {
+        console.error('Error updating selected prayer:', error);
+        setSchedule(schedule);
+        Alert.alert('Error', 'Failed to update prayer selection.');
+      }
+    }
+  };
+
+  const getSelectedPrayerName = (selectedPrayerId?: string) => {
+    if (!selectedPrayerId) return 'None selected';
+    const prayer = userPrayers.find(p => p.id === selectedPrayerId);
+    return prayer?.title || 'Deleted prayer';
+  };
+
 
   const handleTogglePrayer = async (prayerId: string) => {
     const prayer = schedule.find(p => p.id === prayerId);
@@ -415,6 +451,72 @@ export default function PrayerScheduleScreen() {
                       </TouchableOpacity>
                     )}
                   </View>
+
+                  {/* Prayer Selector Row */}
+                  {prayer.enabled && user?.id && (
+                    <TouchableOpacity
+                      style={styles.prayerSelectorRow}
+                      onPress={() => setSelectingPrayerFor(
+                        selectingPrayerFor === prayer.id ? null : prayer.id
+                      )}
+                    >
+                      <Ionicons
+                        name="book-outline"
+                        size={18}
+                        color={colors.accent.teal}
+                      />
+                      <Text style={styles.prayerSelectorText}>
+                        {getSelectedPrayerName(prayer.selectedPrayerId)}
+                      </Text>
+                      <Ionicons
+                        name={selectingPrayerFor === prayer.id ? 'chevron-up' : 'chevron-down'}
+                        size={18}
+                        color={colors.text.muted}
+                      />
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Prayer Selection Dropdown */}
+                  {selectingPrayerFor === prayer.id && (
+                    <View style={styles.prayerPickerContainer}>
+                      <TouchableOpacity
+                        style={[
+                          styles.prayerPickerOption,
+                          !prayer.selectedPrayerId && styles.prayerPickerOptionActive,
+                        ]}
+                        onPress={() => handleSelectPrayer(prayer.id, undefined)}
+                      >
+                        <Text style={[
+                          styles.prayerPickerOptionText,
+                          !prayer.selectedPrayerId && styles.prayerPickerOptionTextActive,
+                        ]}>
+                          None
+                        </Text>
+                      </TouchableOpacity>
+                      {userPrayers.map((userPrayer) => (
+                        <TouchableOpacity
+                          key={userPrayer.id}
+                          style={[
+                            styles.prayerPickerOption,
+                            prayer.selectedPrayerId === userPrayer.id && styles.prayerPickerOptionActive,
+                          ]}
+                          onPress={() => handleSelectPrayer(prayer.id, userPrayer.id)}
+                        >
+                          <Text style={[
+                            styles.prayerPickerOptionText,
+                            prayer.selectedPrayerId === userPrayer.id && styles.prayerPickerOptionTextActive,
+                          ]}>
+                            {userPrayer.title}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                      {userPrayers.length === 0 && (
+                        <Text style={styles.noPrayersText}>
+                          No prayers yet. Create some in the Prayers tab.
+                        </Text>
+                      )}
+                    </View>
+                  )}
                 </View>
 
                 {editingTime === prayer.id && Platform.OS === 'ios' && (
@@ -644,5 +746,50 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text.secondary,
     lineHeight: 20,
+  },
+  prayerSelectorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: 'rgba(13, 148, 136, 0.1)',
+    borderRadius: 12,
+  },
+  prayerSelectorText: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text.primary,
+  },
+  prayerPickerContainer: {
+    marginTop: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  prayerPickerOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.cardBorder,
+  },
+  prayerPickerOptionActive: {
+    backgroundColor: 'rgba(13, 148, 136, 0.15)',
+  },
+  prayerPickerOptionText: {
+    fontSize: 14,
+    color: colors.text.primary,
+  },
+  prayerPickerOptionTextActive: {
+    color: colors.accent.teal,
+    fontWeight: '500',
+  },
+  noPrayersText: {
+    fontSize: 13,
+    color: colors.text.muted,
+    fontStyle: 'italic',
+    padding: 14,
+    textAlign: 'center',
   },
 });

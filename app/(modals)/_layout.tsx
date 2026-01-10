@@ -14,6 +14,9 @@ export default function ModalsLayout() {
       <Stack.Screen name="active-prayer" />
       <Stack.Screen name="prayer-complete" />
       <Stack.Screen name="upgrade" />
+      <Stack.Screen name="prayer-schedule" />
+      <Stack.Screen name="prayer-detail" />
+      <Stack.Screen name="collection-detail" />
     </Stack>
   );
 }

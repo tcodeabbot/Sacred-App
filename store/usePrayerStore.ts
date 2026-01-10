@@ -11,13 +11,14 @@ interface PrayerState {
   // Prayer Lock Screen
   isLockScreenVisible: boolean;
   currentScheduleName: string | null;
+  currentPrayerId: string | null; // ID of the selected user prayer to display
 
   // Prayer Schedules
   schedules: PrayerSchedule[];
   notificationIds: Record<string, string>; // scheduleId -> notificationId
 
   // Actions
-  showLockScreen: (scheduleName?: string) => void;
+  showLockScreen: (scheduleName?: string, prayerId?: string) => void;
   hideLockScreen: () => void;
 
   // Schedule management
@@ -58,13 +59,15 @@ const DEFAULT_SCHEDULES: PrayerSchedule[] = [
 export const usePrayerStore = create<PrayerState>((set, get) => ({
   isLockScreenVisible: false,
   currentScheduleName: null,
+  currentPrayerId: null,
   schedules: DEFAULT_SCHEDULES,
   notificationIds: {},
 
-  showLockScreen: (scheduleName) => {
+  showLockScreen: (scheduleName, prayerId) => {
     set({
       isLockScreenVisible: true,
       currentScheduleName: scheduleName || 'Prayer Time',
+      currentPrayerId: prayerId || null,
     });
   },
 
@@ -72,6 +75,7 @@ export const usePrayerStore = create<PrayerState>((set, get) => ({
     set({
       isLockScreenVisible: false,
       currentScheduleName: null,
+      currentPrayerId: null,
     });
   },
 

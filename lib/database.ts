@@ -7,6 +7,8 @@ import {
   BlockedApp,
   ScriptureReflection,
   PrayerScheduleItem,
+  PrayerCollection,
+  UserPrayer,
 } from '@/types';
 
 // ============================================================================
@@ -420,6 +422,7 @@ export async function getPrayerSchedule(userId: string) {
     time: item.time,
     duration: item.duration,
     enabled: item.enabled,
+    selectedPrayerId: item.selected_prayer_id || undefined,
   })) as PrayerScheduleItem[];
 }
 
@@ -460,6 +463,7 @@ export async function createPrayerScheduleItem(
     time: data.time,
     duration: data.duration,
     enabled: data.enabled,
+    selectedPrayerId: data.selected_prayer_id || undefined,
   } as PrayerScheduleItem;
 }
 
@@ -473,6 +477,7 @@ export async function updatePrayerScheduleItem(
   if (updates.time !== undefined) updateData.time = updates.time;
   if (updates.duration !== undefined) updateData.duration = updates.duration;
   if (updates.enabled !== undefined) updateData.enabled = updates.enabled;
+  if (updates.selectedPrayerId !== undefined) updateData.selected_prayer_id = updates.selectedPrayerId || null;
 
   const { data, error } = await supabase
     .from('prayer_schedule')
@@ -489,6 +494,7 @@ export async function updatePrayerScheduleItem(
     time: data.time,
     duration: data.duration,
     enabled: data.enabled,
+    selectedPrayerId: data.selected_prayer_id || undefined,
   } as PrayerScheduleItem;
 }
 
@@ -534,4 +540,288 @@ export async function updatePrayerSchedule(
     time: item.time,
     enabled: item.enabled,
   })) as PrayerScheduleItem[];
+}
+
+// ============================================================================
+// PRAYER COLLECTIONS OPERATIONS
+// ============================================================================
+
+export async function getPrayerCollections(userId: string) {
+  const { data, error } = await supabase
+    .from('prayer_collections')
+    .select('*')
+    .eq('user_id', userId)
+    .order('sort_order', { ascending: true });
+
+  if (error) throw error;
+
+  return data.map((collection) => ({
+    id: collection.id,
+    name: collection.name,
+    description: collection.description,
+    color: collection.color as PrayerCollection['color'],
+    sortOrder: collection.sort_order,
+  })) as PrayerCollection[];
+}
+
+export async function createPrayerCollection(
+  userId: string,
+  collection: Omit<PrayerCollection, 'id' | 'sortOrder'>
+) {
+  // Get the next sort_order
+  const { data: existingItems } = await supabase
+    .from('prayer_collections')
+    .select('sort_order')
+    .eq('user_id', userId)
+    .order('sort_order', { ascending: false })
+    .limit(1);
+
+  const nextSortOrder = existingItems && existingItems.length > 0
+    ? existingItems[0].sort_order + 1
+    : 1;
+
+  const { data, error } = await supabase
+    .from('prayer_collections')
+    .insert({
+      user_id: userId,
+      name: collection.name,
+      description: collection.description,
+      color: collection.color,
+      sort_order: nextSortOrder,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return {
+    id: data.id,
+    name: data.name,
+    description: data.description,
+    color: data.color as PrayerCollection['color'],
+    sortOrder: data.sort_order,
+  } as PrayerCollection;
+}
+
+export async function updatePrayerCollection(
+  collectionId: string,
+  updates: Partial<Omit<PrayerCollection, 'id'>>
+) {
+  const updateData: Record<string, unknown> = {};
+  if (updates.name !== undefined) updateData.name = updates.name;
+  if (updates.description !== undefined) updateData.description = updates.description;
+  if (updates.color !== undefined) updateData.color = updates.color;
+  if (updates.sortOrder !== undefined) updateData.sort_order = updates.sortOrder;
+
+  const { data, error } = await supabase
+    .from('prayer_collections')
+    .update(updateData)
+    .eq('id', collectionId)
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return {
+    id: data.id,
+    name: data.name,
+    description: data.description,
+    color: data.color as PrayerCollection['color'],
+    sortOrder: data.sort_order,
+  } as PrayerCollection;
+}
+
+export async function deletePrayerCollection(collectionId: string) {
+  const { error } = await supabase
+    .from('prayer_collections')
+    .delete()
+    .eq('id', collectionId);
+
+  if (error) throw error;
+}
+
+// ============================================================================
+// USER PRAYERS OPERATIONS
+// ============================================================================
+
+export async function getUserPrayers(userId: string) {
+  const { data, error } = await supabase
+    .from('prayers')
+    .select('*')
+    .eq('user_id', userId)
+    .order('sort_order', { ascending: true });
+
+  if (error) throw error;
+
+  return data.map((prayer) => ({
+    id: prayer.id,
+    collectionId: prayer.collection_id || undefined,
+    title: prayer.title,
+    excerpt: prayer.excerpt,
+    fullText: prayer.full_text || undefined,
+    isFavorite: prayer.is_favorite,
+    sortOrder: prayer.sort_order,
+    createdAt: new Date(prayer.created_at),
+  })) as UserPrayer[];
+}
+
+export async function getUserPrayersByCollection(
+  userId: string,
+  collectionId: string | null
+) {
+  let query = supabase
+    .from('prayers')
+    .select('*')
+    .eq('user_id', userId)
+    .order('sort_order', { ascending: true });
+
+  if (collectionId === null) {
+    query = query.is('collection_id', null);
+  } else {
+    query = query.eq('collection_id', collectionId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  return data.map((prayer) => ({
+    id: prayer.id,
+    collectionId: prayer.collection_id || undefined,
+    title: prayer.title,
+    excerpt: prayer.excerpt,
+    fullText: prayer.full_text || undefined,
+    isFavorite: prayer.is_favorite,
+    sortOrder: prayer.sort_order,
+    createdAt: new Date(prayer.created_at),
+  })) as UserPrayer[];
+}
+
+export async function getFavoritePrayers(userId: string) {
+  const { data, error } = await supabase
+    .from('prayers')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('is_favorite', true)
+    .order('sort_order', { ascending: true });
+
+  if (error) throw error;
+
+  return data.map((prayer) => ({
+    id: prayer.id,
+    collectionId: prayer.collection_id || undefined,
+    title: prayer.title,
+    excerpt: prayer.excerpt,
+    fullText: prayer.full_text || undefined,
+    isFavorite: prayer.is_favorite,
+    sortOrder: prayer.sort_order,
+    createdAt: new Date(prayer.created_at),
+  })) as UserPrayer[];
+}
+
+export async function getUserPrayerById(prayerId: string) {
+  const { data, error } = await supabase
+    .from('prayers')
+    .select('*')
+    .eq('id', prayerId)
+    .single();
+
+  if (error) throw error;
+
+  return {
+    id: data.id,
+    collectionId: data.collection_id || undefined,
+    title: data.title,
+    excerpt: data.excerpt,
+    fullText: data.full_text || undefined,
+    isFavorite: data.is_favorite,
+    sortOrder: data.sort_order,
+    createdAt: new Date(data.created_at),
+  } as UserPrayer;
+}
+
+export async function createUserPrayer(
+  userId: string,
+  prayer: Omit<UserPrayer, 'id' | 'sortOrder' | 'createdAt'>
+) {
+  // Get the next sort_order
+  const { data: existingItems } = await supabase
+    .from('prayers')
+    .select('sort_order')
+    .eq('user_id', userId)
+    .order('sort_order', { ascending: false })
+    .limit(1);
+
+  const nextSortOrder = existingItems && existingItems.length > 0
+    ? existingItems[0].sort_order + 1
+    : 1;
+
+  const { data, error } = await supabase
+    .from('prayers')
+    .insert({
+      user_id: userId,
+      collection_id: prayer.collectionId || null,
+      title: prayer.title,
+      excerpt: prayer.excerpt,
+      full_text: prayer.fullText || null,
+      is_favorite: prayer.isFavorite,
+      sort_order: nextSortOrder,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return {
+    id: data.id,
+    collectionId: data.collection_id || undefined,
+    title: data.title,
+    excerpt: data.excerpt,
+    fullText: data.full_text || undefined,
+    isFavorite: data.is_favorite,
+    sortOrder: data.sort_order,
+    createdAt: new Date(data.created_at),
+  } as UserPrayer;
+}
+
+export async function updateUserPrayer(
+  prayerId: string,
+  updates: Partial<Omit<UserPrayer, 'id' | 'createdAt'>>
+) {
+  const updateData: Record<string, unknown> = {};
+  if (updates.collectionId !== undefined) updateData.collection_id = updates.collectionId || null;
+  if (updates.title !== undefined) updateData.title = updates.title;
+  if (updates.excerpt !== undefined) updateData.excerpt = updates.excerpt;
+  if (updates.fullText !== undefined) updateData.full_text = updates.fullText || null;
+  if (updates.isFavorite !== undefined) updateData.is_favorite = updates.isFavorite;
+  if (updates.sortOrder !== undefined) updateData.sort_order = updates.sortOrder;
+
+  const { data, error } = await supabase
+    .from('prayers')
+    .update(updateData)
+    .eq('id', prayerId)
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return {
+    id: data.id,
+    collectionId: data.collection_id || undefined,
+    title: data.title,
+    excerpt: data.excerpt,
+    fullText: data.full_text || undefined,
+    isFavorite: data.is_favorite,
+    sortOrder: data.sort_order,
+    createdAt: new Date(data.created_at),
+  } as UserPrayer;
+}
+
+export async function deleteUserPrayer(prayerId: string) {
+  const { error } = await supabase
+    .from('prayers')
+    .delete()
+    .eq('id', prayerId);
+
+  if (error) throw error;
 }

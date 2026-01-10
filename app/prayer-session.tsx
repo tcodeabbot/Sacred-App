@@ -13,17 +13,19 @@ import { useRouter } from 'expo-router';
 import { colors } from '@/constants/colors';
 import { usePrayerStore } from '@/store/usePrayerStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { createPrayerSession, updateUserStatsAfterPrayer } from '@/lib/database';
+import { UserPrayer } from '@/types';
+import { createPrayerSession, updateUserStatsAfterPrayer, getUserPrayerById } from '@/lib/database';
 
 export default function PrayerSession() {
   const router = useRouter();
-  const { hideLockScreen, currentScheduleName } = usePrayerStore();
+  const { hideLockScreen, currentScheduleName, currentPrayerId } = usePrayerStore();
   const { user } = useAuthStore();
 
   const [startTime] = useState(new Date());
   const [elapsedTime, setElapsedTime] = useState(0);
   const [mode, setMode] = useState<'silent' | 'scripture' | 'written'>('silent');
   const [isComplete, setIsComplete] = useState(false);
+  const [selectedPrayer, setSelectedPrayer] = useState<UserPrayer | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -33,6 +35,23 @@ export default function PrayerSession() {
 
     return () => clearInterval(interval);
   }, [startTime]);
+
+  // Fetch selected prayer if one is set
+  useEffect(() => {
+    const fetchPrayer = async () => {
+      if (currentPrayerId) {
+        try {
+          const prayer = await getUserPrayerById(currentPrayerId);
+          setSelectedPrayer(prayer);
+          // Auto-switch to scripture mode if a prayer is selected
+          setMode('scripture');
+        } catch (error) {
+          console.error('Error fetching selected prayer:', error);
+        }
+      }
+    };
+    fetchPrayer();
+  }, [currentPrayerId]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -178,10 +197,21 @@ export default function PrayerSession() {
 
             {mode === 'scripture' && (
               <View style={styles.scriptureMode}>
-                <Text style={styles.scriptureText}>
-                  "Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God."
-                </Text>
-                <Text style={styles.scriptureReference}>Philippians 4:6</Text>
+                {selectedPrayer ? (
+                  <>
+                    <Text style={styles.prayerTitle}>{selectedPrayer.title}</Text>
+                    <Text style={styles.scriptureText}>
+                      {selectedPrayer.fullText || selectedPrayer.excerpt}
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.scriptureText}>
+                      "Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God."
+                    </Text>
+                    <Text style={styles.scriptureReference}>Philippians 4:6</Text>
+                  </>
+                )}
               </View>
             )}
 
@@ -308,6 +338,13 @@ const styles = StyleSheet.create({
   },
   scriptureMode: {
     gap: 16,
+  },
+  prayerTitle: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 8,
   },
   scriptureText: {
     fontSize: 18,
