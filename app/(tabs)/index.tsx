@@ -26,7 +26,7 @@ export default function HomeScreen() {
 
   // Calculate goal based on enabled scheduled prayers
   const scheduledPrayersGoal = settings.prayerSchedule.filter(p => p.enabled).length;
-  
+
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', {
       hour: 'numeric',
@@ -34,11 +34,11 @@ export default function HomeScreen() {
       hour12: true,
     });
   };
-  
+
   const getAppInfo = (appId: string | null) => {
     return blockedApps.find((a) => a.id === appId);
   };
-  
+
   const handlePrayNow = () => {
     // Simulate intercept with Instagram
     const instagram = blockedApps.find(a => a.id === 'instagram');
@@ -68,7 +68,7 @@ export default function HomeScreen() {
     // For 'once' option, we could add to a separate one-time prayers list
     // or trigger a notification for that specific time
   };
-  
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -122,7 +122,7 @@ export default function HomeScreen() {
           maxConsecutiveGraceDays={settings.maxConsecutiveGraceDays}
           graceDaysEnabled={settings.graceDaysEnabled}
         />
-        
+
         {/* Quick Actions */}
         <View style={styles.quickActions}>
           <TouchableOpacity style={styles.actionCard} onPress={handlePrayNow}>
@@ -149,11 +149,11 @@ export default function HomeScreen() {
             <Text style={styles.actionSubtitle}>Daily verse</Text>
           </TouchableOpacity>
         </View>
-        
+
         {/* Today's Pauses */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Today's Pauses</Text>
-          
+
           {todaysPrayers.length === 0 ? (
             <Card style={styles.emptyCard}>
               <Text style={styles.emptyText}>No prayers yet today</Text>
@@ -202,7 +202,7 @@ export default function HomeScreen() {
 
       {/* Floating Action Button */}
       <FloatingActionButton
-        onPress={() => setShowQuickSchedule(true)}
+        onPress={() => router.push('/(modals)/prayer-schedule')}
         icon="time-outline"
       />
     </SafeAreaView>

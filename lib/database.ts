@@ -418,6 +418,7 @@ export async function getPrayerSchedule(userId: string) {
     id: item.id,
     name: item.name,
     time: item.time,
+    duration: item.duration,
     enabled: item.enabled,
   })) as PrayerScheduleItem[];
 }
@@ -444,6 +445,7 @@ export async function createPrayerScheduleItem(
       user_id: userId,
       name: item.name,
       time: item.time,
+      duration: item.duration,
       enabled: item.enabled,
       sort_order: nextSortOrder,
     })
@@ -456,6 +458,7 @@ export async function createPrayerScheduleItem(
     id: data.id,
     name: data.name,
     time: data.time,
+    duration: data.duration,
     enabled: data.enabled,
   } as PrayerScheduleItem;
 }
@@ -468,6 +471,7 @@ export async function updatePrayerScheduleItem(
   const updateData: Record<string, unknown> = {};
   if (updates.name !== undefined) updateData.name = updates.name;
   if (updates.time !== undefined) updateData.time = updates.time;
+  if (updates.duration !== undefined) updateData.duration = updates.duration;
   if (updates.enabled !== undefined) updateData.enabled = updates.enabled;
 
   const { data, error } = await supabase
@@ -483,6 +487,7 @@ export async function updatePrayerScheduleItem(
     id: data.id,
     name: data.name,
     time: data.time,
+    duration: data.duration,
     enabled: data.enabled,
   } as PrayerScheduleItem;
 }

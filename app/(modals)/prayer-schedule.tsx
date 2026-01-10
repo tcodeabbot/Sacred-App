@@ -61,6 +61,55 @@ export default function PrayerScheduleScreen() {
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
   };
 
+  const formatDuration = (minutes: number) => {
+    if (minutes < 60) {
+      return `${minutes} min`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  };
+
+  const durationOptions = [2, 5, 10, 15, 20, 30, 45, 60];
+
+  const handleDurationChange = async (prayerId: string, newDuration: number) => {
+    console.log('Updating prayer duration:', { prayerId, newDuration });
+
+    // Optimistically update UI
+    const updatedSchedule = schedule.map(prayer =>
+      prayer.id === prayerId ? { ...prayer, duration: newDuration } : prayer
+    );
+    setSchedule(updatedSchedule);
+    updateSettings({ prayerSchedule: updatedSchedule });
+
+    // Sync with database
+    if (user?.id) {
+      try {
+        const result = await updatePrayerScheduleItem(prayerId, { duration: newDuration });
+        console.log('Prayer duration updated in database:', result);
+      } catch (error) {
+        console.error('Error updating prayer duration:', error);
+        // Revert on error
+        setSchedule(schedule);
+        Alert.alert('Error', 'Failed to update prayer duration. Please try again.');
+      }
+    }
+  };
+
+  const showDurationPicker = (prayer: PrayerScheduleItem) => {
+    Alert.alert(
+      'Prayer Duration',
+      `Select duration for ${prayer.name}`,
+      [
+        ...durationOptions.map(duration => ({
+          text: formatDuration(duration),
+          onPress: () => handleDurationChange(prayer.id, duration),
+        })),
+        { text: 'Cancel', style: 'cancel' as const },
+      ]
+    );
+  };
+
   const handleTogglePrayer = async (prayerId: string) => {
     const prayer = schedule.find(p => p.id === prayerId);
     if (!prayer) return;
@@ -191,6 +240,7 @@ export default function PrayerScheduleScreen() {
     const newPrayer: Omit<PrayerScheduleItem, 'id'> = {
       name: 'New Prayer',
       time: '12:00',
+      duration: 5, // Default 5 minutes
       enabled: true,
     };
 
@@ -339,6 +389,21 @@ export default function PrayerScheduleScreen() {
                       {prayer.enabled && (
                         <Ionicons name="chevron-down" size={18} color={colors.text.muted} />
                       )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.durationButton, !prayer.enabled && styles.disabledButton]}
+                      onPress={() => prayer.enabled && showDurationPicker(prayer)}
+                      disabled={!prayer.enabled}
+                    >
+                      <Ionicons
+                        name="hourglass-outline"
+                        size={18}
+                        color={prayer.enabled ? colors.accent.purple : colors.text.muted}
+                      />
+                      <Text style={[styles.durationText, !prayer.enabled && styles.disabledText]}>
+                        {formatDuration(prayer.duration || 5)}
+                      </Text>
                     </TouchableOpacity>
 
                     {schedule.length > 1 && (
@@ -512,6 +577,20 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  durationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: 'rgba(124, 58, 237, 0.1)',
+    borderRadius: 12,
+  },
+  durationText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.accent.purple,
   },
   timeText: {
     flex: 1,

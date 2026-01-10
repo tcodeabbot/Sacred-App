@@ -32,6 +32,7 @@ export interface PrayerScheduleItem {
   id: string;
   name: string;
   time: string; // Format: "HH:mm" (24-hour)
+  duration: number; // Duration in minutes
   enabled: boolean;
 }
 

@@ -57,10 +57,10 @@ const initialSettings: UserSettings = {
   maxGraceDays: 2,
   maxConsecutiveGraceDays: 1,
   prayerSchedule: [
-    { id: '1', name: 'Morning Prayer', time: '07:00', enabled: true },
-    { id: '2', name: 'Noon Prayer', time: '12:00', enabled: true },
-    { id: '3', name: 'Evening Prayer', time: '18:00', enabled: true },
-    { id: '4', name: 'Night Prayer', time: '21:00', enabled: true },
+    { id: '1', name: 'Morning Prayer', time: '07:00', duration: 5, enabled: true },
+    { id: '2', name: 'Noon Prayer', time: '12:00', duration: 5, enabled: true },
+    { id: '3', name: 'Evening Prayer', time: '18:00', duration: 5, enabled: true },
+    { id: '4', name: 'Night Prayer', time: '21:00', duration: 5, enabled: true },
   ],
 };
 
@@ -132,26 +132,26 @@ export const useAppStore = create<AppState>((set, get) => ({
   favoriteScriptures: [],
   todaysScripture: scriptures[0], // Start with first scripture
   weeklyInsight: null,
-  
+
   completeOnboarding: () => set({ isOnboarded: true }),
-  
+
   updateSettings: (newSettings) => set((state) => ({
     settings: { ...state.settings, ...newSettings }
   })),
-  
+
   toggleBlockedApp: (appId) => set((state) => ({
     blockedApps: state.blockedApps.map(app =>
       app.id === appId ? { ...app, isBlocked: !app.isBlocked } : app
     )
   })),
-  
+
   setSelectedApps: (appIds) => set((state) => ({
     blockedApps: state.blockedApps.map(app => ({
       ...app,
       isBlocked: appIds.includes(app.id)
     }))
   })),
-  
+
   startPrayer: (triggeredBy) => {
     const newPrayer: PrayerSession = {
       id: Date.now().toString(),
@@ -163,7 +163,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     };
     set({ currentPrayer: newPrayer, isInterceptActive: false });
   },
-  
+
   completePrayer: () => {
     const { currentPrayer, todaysPrayers, stats } = get();
     if (currentPrayer) {
@@ -173,7 +173,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         completed: true,
         duration: Math.floor((Date.now() - currentPrayer.startedAt.getTime()) / 1000),
       };
-      
+
       set({
         currentPrayer: null,
         todaysPrayers: [...todaysPrayers, completedPrayer],
@@ -186,12 +186,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       });
     }
   },
-  
+
   triggerIntercept: (app) => set({
     isInterceptActive: true,
     interceptedApp: app,
   }),
-  
+
   dismissIntercept: () => set({
     isInterceptActive: false,
     interceptedApp: null,
