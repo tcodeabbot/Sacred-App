@@ -56,6 +56,12 @@ const initialSettings: UserSettings = {
   graceDaysEnabled: true,
   maxGraceDays: 2,
   maxConsecutiveGraceDays: 1,
+  prayerSchedule: [
+    { id: '1', name: 'Morning Prayer', time: '07:00', enabled: true },
+    { id: '2', name: 'Noon Prayer', time: '12:00', enabled: true },
+    { id: '3', name: 'Evening Prayer', time: '18:00', enabled: true },
+    { id: '4', name: 'Night Prayer', time: '21:00', enabled: true },
+  ],
 };
 
 const initialStats: UserStats = {

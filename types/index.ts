@@ -28,6 +28,13 @@ export interface PrayerSession {
   tags?: string[];
 }
 
+export interface PrayerScheduleItem {
+  id: string;
+  name: string;
+  time: string; // Format: "HH:mm" (24-hour)
+  enabled: boolean;
+}
+
 export interface UserSettings {
   pauseDuration: number;
   dailyGoal: number;
@@ -37,6 +44,7 @@ export interface UserSettings {
   graceDaysEnabled: boolean;
   maxGraceDays: number;
   maxConsecutiveGraceDays: number;
+  prayerSchedule: PrayerScheduleItem[];
 }
 
 export interface UserStats {

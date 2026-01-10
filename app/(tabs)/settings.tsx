@@ -108,6 +108,13 @@ export default function SettingsScreen() {
           </View>
           <View style={styles.sectionContent}>
             <SettingsRow
+              iconName="time-outline"
+              label="Prayer Schedule"
+              value={`${settings.prayerSchedule.filter(p => p.enabled).length} prayers`}
+              onPress={() => router.push('/(modals)/prayer-schedule')}
+            />
+            <View style={styles.separator} />
+            <SettingsRow
               iconName="book-outline"
               label="Prayer Style"
               value={settings.prayerStyle.charAt(0).toUpperCase() + settings.prayerStyle.slice(1)}

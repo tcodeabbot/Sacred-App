@@ -6,10 +6,11 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/components/ui/Card';
 import { ProgressRing } from '@/components/ui/ProgressRing';
-import { BottomSheet } from '@/components/ui/BottomSheet';
-import { GoalPicker } from '@/components/ui/GoalPicker';
 import { EncouragementText } from '@/components/home/EncouragementText';
 import { StreakCard } from '@/components/home/StreakCard';
+import { NextPrayer } from '@/components/home/NextPrayer';
+import { FloatingActionButton } from '@/components/ui/FloatingActionButton';
+import { QuickScheduleSheet } from '@/components/home/QuickScheduleSheet';
 import { colors } from '@/constants/colors';
 import { useAppStore } from '@/store/useAppStore';
 import { usePrayerStore } from '@/store/usePrayerStore';
@@ -19,9 +20,12 @@ export default function HomeScreen() {
   const router = useRouter();
   const { stats, todaysPrayers, settings, triggerIntercept, updateSettings } = useAppStore();
   const { showLockScreen } = usePrayerStore();
-  const [showGoalPicker, setShowGoalPicker] = useState(false);
+  const [showQuickSchedule, setShowQuickSchedule] = useState(false);
 
   const todayCount = todaysPrayers.length;
+
+  // Calculate goal based on enabled scheduled prayers
+  const scheduledPrayersGoal = settings.prayerSchedule.filter(p => p.enabled).length;
   
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', {
@@ -47,9 +51,22 @@ export default function HomeScreen() {
     router.push('/(modals)/intercept');
   };
 
-  const handleGoalChange = (newGoal: number) => {
-    updateSettings({ dailyGoal: newGoal });
-    setShowGoalPicker(false);
+  const handleQuickScheduleSave = (time: string, name: string, repeatType: 'once' | 'daily') => {
+    if (repeatType === 'daily') {
+      // Add to prayer schedule
+      const newId = (settings.prayerSchedule.length + 1).toString();
+      const newPrayer = {
+        id: newId,
+        name,
+        time,
+        enabled: true,
+      };
+      updateSettings({
+        prayerSchedule: [...settings.prayerSchedule, newPrayer],
+      });
+    }
+    // For 'once' option, we could add to a separate one-time prayers list
+    // or trigger a notification for that specific time
   };
   
   return (
@@ -67,24 +84,29 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
         </View>
-        
+
+        {/* Next Prayer Section */}
+        <NextPrayer prayerSchedule={settings.prayerSchedule} />
+
         {/* Hero Card */}
         <Card gradient={colors.gradients.teal} style={styles.heroCard}>
           <View style={styles.heroContent}>
             <Text style={styles.heroLabel}>Today's Prayers</Text>
 
-            <EncouragementText current={todayCount} goal={settings.dailyGoal} />
+            <EncouragementText current={todayCount} goal={scheduledPrayersGoal} />
 
             <View style={styles.progressContainer}>
               <ProgressRing
-                progress={todayCount / settings.dailyGoal}
+                progress={scheduledPrayersGoal > 0 ? todayCount / scheduledPrayersGoal : 0}
                 size={180}
                 strokeWidth={12}
               >
                 <View style={styles.progressContent}>
                   <Text style={styles.progressNumber}>{todayCount}</Text>
-                  <TouchableOpacity onPress={() => setShowGoalPicker(true)}>
-                    <Text style={styles.progressGoal}>of {settings.dailyGoal}</Text>
+                  <TouchableOpacity onPress={() => router.push('/(modals)/prayer-schedule')}>
+                    <Text style={styles.progressGoal}>
+                      of {scheduledPrayersGoal} {scheduledPrayersGoal === 1 ? 'prayer' : 'prayers'}
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </ProgressRing>
@@ -171,25 +193,18 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      {/* Goal Picker Bottom Sheet */}
-      <BottomSheet
-        isVisible={showGoalPicker}
-        onClose={() => setShowGoalPicker(false)}
-        snapPoint={0.5}
-      >
-        <View style={styles.bottomSheetContent}>
-          <Text style={styles.bottomSheetTitle}>Daily Goal</Text>
-          <Text style={styles.bottomSheetSubtitle}>
-            How many prayers would you like to complete daily?
-          </Text>
-          <GoalPicker
-            value={settings.dailyGoal}
-            onChange={handleGoalChange}
-            min={1}
-            max={20}
-          />
-        </View>
-      </BottomSheet>
+      {/* Quick Schedule Bottom Sheet */}
+      <QuickScheduleSheet
+        isVisible={showQuickSchedule}
+        onClose={() => setShowQuickSchedule(false)}
+        onSave={handleQuickScheduleSave}
+      />
+
+      {/* Floating Action Button */}
+      <FloatingActionButton
+        onPress={() => setShowQuickSchedule(true)}
+        icon="time-outline"
+      />
     </SafeAreaView>
   );
 }
@@ -351,22 +366,5 @@ const styles = StyleSheet.create({
   prayerDuration: {
     fontSize: 14,
     color: colors.text.secondary,
-  },
-  bottomSheetContent: {
-    paddingHorizontal: 24,
-    paddingBottom: 32,
-  },
-  bottomSheetTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.text.primary,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  bottomSheetSubtitle: {
-    fontSize: 14,
-    color: colors.text.secondary,
-    marginBottom: 24,
-    textAlign: 'center',
   },
 });
