@@ -1,20 +1,58 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform, TextInput, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { colors } from '@/constants/colors';
 import { useAppStore } from '@/store/useAppStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { PrayerScheduleItem } from '@/types';
+import {
+  getPrayerSchedule,
+  createPrayerScheduleItem,
+  updatePrayerScheduleItem,
+  deletePrayerScheduleItem,
+} from '@/lib/database';
 
 export default function PrayerScheduleScreen() {
   const router = useRouter();
   const { settings, updateSettings } = useAppStore();
+  const { user } = useAuthStore();
   const [editingTime, setEditingTime] = useState<string | null>(null);
   const [editingName, setEditingName] = useState<string | null>(null);
   const [tempTime, setTempTime] = useState<Date>(new Date());
   const [tempName, setTempName] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [schedule, setSchedule] = useState<PrayerScheduleItem[]>(settings.prayerSchedule);
+
+  // Fetch prayer schedule from database on mount
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      if (!user?.id) {
+        // Use local settings if not authenticated
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const data = await getPrayerSchedule(user.id);
+        setSchedule(data);
+        // Also update local store to keep in sync
+        updateSettings({ prayerSchedule: data });
+      } catch (error) {
+        console.error('Error fetching prayer schedule:', error);
+        // Keep using initial local settings on error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSchedule();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Only re-fetch when user changes
 
   const formatTime = (timeString: string) => {
     const [hours, minutes] = timeString.split(':').map(Number);
@@ -23,11 +61,32 @@ export default function PrayerScheduleScreen() {
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
   };
 
-  const handleTogglePrayer = (prayerId: string) => {
-    const updatedSchedule = settings.prayerSchedule.map(prayer =>
-      prayer.id === prayerId ? { ...prayer, enabled: !prayer.enabled } : prayer
+  const handleTogglePrayer = async (prayerId: string) => {
+    const prayer = schedule.find(p => p.id === prayerId);
+    if (!prayer) return;
+
+    const newEnabled = !prayer.enabled;
+    console.log('Toggling prayer:', { prayerId, newEnabled });
+
+    // Optimistically update UI
+    const updatedSchedule = schedule.map(p =>
+      p.id === prayerId ? { ...p, enabled: newEnabled } : p
     );
+    setSchedule(updatedSchedule);
     updateSettings({ prayerSchedule: updatedSchedule });
+
+    // Sync with database
+    if (user?.id) {
+      try {
+        const result = await updatePrayerScheduleItem(prayerId, { enabled: newEnabled });
+        console.log('Prayer toggled in database:', result);
+      } catch (error) {
+        console.error('Error updating prayer schedule:', error);
+        // Revert on error
+        setSchedule(schedule);
+        Alert.alert('Error', 'Failed to update prayer. Please try again.');
+      }
+    }
   };
 
   const handleNamePress = (prayer: PrayerScheduleItem) => {
@@ -35,15 +94,39 @@ export default function PrayerScheduleScreen() {
     setEditingName(prayer.id);
   };
 
-  const handleNameChange = (prayerId: string, newName: string) => {
-    if (newName.trim()) {
-      const updatedSchedule = settings.prayerSchedule.map(prayer =>
-        prayer.id === prayerId ? { ...prayer, name: newName.trim() } : prayer
-      );
-      updateSettings({ prayerSchedule: updatedSchedule });
+  const handleNameChange = async (prayerId: string, newName: string) => {
+    if (!newName.trim()) {
+      setEditingName(null);
+      setTempName('');
+      return;
     }
+
+    const trimmedName = newName.trim();
+    console.log('Updating prayer name:', { prayerId, trimmedName });
+
+    // Optimistically update UI
+    const updatedSchedule = schedule.map(prayer =>
+      prayer.id === prayerId ? { ...prayer, name: trimmedName } : prayer
+    );
+    setSchedule(updatedSchedule);
+    updateSettings({ prayerSchedule: updatedSchedule });
     setEditingName(null);
     setTempName('');
+
+    // Sync with database
+    if (user?.id) {
+      try {
+        const result = await updatePrayerScheduleItem(prayerId, { name: trimmedName });
+        console.log('Prayer name updated in database:', result);
+      } catch (error) {
+        console.error('Error updating prayer name:', error);
+        // Revert on error
+        setSchedule(schedule);
+        Alert.alert('Error', 'Failed to update prayer name. Please try again.');
+      }
+    } else {
+      console.log('No user logged in, only updating local state');
+    }
   };
 
   const handleTimePress = (prayer: PrayerScheduleItem) => {
@@ -60,7 +143,7 @@ export default function PrayerScheduleScreen() {
     }
   };
 
-  const handleTimeChange = (event: any, selectedDate?: Date) => {
+  const handleTimeChange = async (event: any, selectedDate?: Date) => {
     // On Android, dismiss picker after selection
     if (Platform.OS === 'android') {
       setEditingTime(null);
@@ -71,15 +154,31 @@ export default function PrayerScheduleScreen() {
       const hours = selectedDate.getHours().toString().padStart(2, '0');
       const minutes = selectedDate.getMinutes().toString().padStart(2, '0');
       const newTime = `${hours}:${minutes}`;
+      console.log('Updating prayer time:', { prayerId: editingTime, newTime });
 
-      const updatedSchedule = settings.prayerSchedule.map(prayer =>
+      // Optimistically update UI
+      const updatedSchedule = schedule.map(prayer =>
         prayer.id === editingTime ? { ...prayer, time: newTime } : prayer
       );
+      setSchedule(updatedSchedule);
       updateSettings({ prayerSchedule: updatedSchedule });
 
       // On iOS, keep picker open and update temp time
       if (Platform.OS === 'ios') {
         setTempTime(selectedDate);
+      }
+
+      // Sync with database
+      if (user?.id) {
+        try {
+          const result = await updatePrayerScheduleItem(editingTime, { time: newTime });
+          console.log('Prayer time updated in database:', result);
+        } catch (error) {
+          console.error('Error updating prayer time:', error);
+          // Revert on error
+          setSchedule(schedule);
+          Alert.alert('Error', 'Failed to update prayer time. Please try again.');
+        }
       }
     }
   };
@@ -88,21 +187,40 @@ export default function PrayerScheduleScreen() {
     setEditingTime(null);
   };
 
-  const handleAddPrayer = () => {
-    const newId = (settings.prayerSchedule.length + 1).toString();
-    const newPrayer: PrayerScheduleItem = {
-      id: newId,
+  const handleAddPrayer = async () => {
+    const newPrayer: Omit<PrayerScheduleItem, 'id'> = {
       name: 'New Prayer',
       time: '12:00',
       enabled: true,
     };
-    updateSettings({
-      prayerSchedule: [...settings.prayerSchedule, newPrayer],
-    });
+
+    if (user?.id) {
+      try {
+        setIsSaving(true);
+        const createdPrayer = await createPrayerScheduleItem(user.id, newPrayer);
+        const updatedSchedule = [...schedule, createdPrayer];
+        setSchedule(updatedSchedule);
+        updateSettings({ prayerSchedule: updatedSchedule });
+      } catch (error) {
+        console.error('Error creating prayer schedule:', error);
+        Alert.alert('Error', 'Failed to add prayer. Please try again.');
+      } finally {
+        setIsSaving(false);
+      }
+    } else {
+      // Local-only mode
+      const localPrayer: PrayerScheduleItem = {
+        ...newPrayer,
+        id: Date.now().toString(),
+      };
+      const updatedSchedule = [...schedule, localPrayer];
+      setSchedule(updatedSchedule);
+      updateSettings({ prayerSchedule: updatedSchedule });
+    }
   };
 
   const handleDeletePrayer = (prayerId: string) => {
-    if (settings.prayerSchedule.length <= 1) {
+    if (schedule.length <= 1) {
       Alert.alert('Cannot Delete', 'You must have at least one prayer in your schedule.');
       return;
     }
@@ -115,9 +233,23 @@ export default function PrayerScheduleScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            const updatedSchedule = settings.prayerSchedule.filter(p => p.id !== prayerId);
+          onPress: async () => {
+            // Optimistically update UI
+            const updatedSchedule = schedule.filter(p => p.id !== prayerId);
+            setSchedule(updatedSchedule);
             updateSettings({ prayerSchedule: updatedSchedule });
+
+            // Sync with database
+            if (user?.id) {
+              try {
+                await deletePrayerScheduleItem(prayerId);
+              } catch (error) {
+                console.error('Error deleting prayer:', error);
+                // Revert on error
+                setSchedule(schedule);
+                Alert.alert('Error', 'Failed to delete prayer. Please try again.');
+              }
+            }
           },
         },
       ]
@@ -131,8 +263,12 @@ export default function PrayerScheduleScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.title}>Prayer Schedule</Text>
-        <TouchableOpacity onPress={handleAddPrayer} style={styles.addButton}>
-          <Ionicons name="add" size={24} color={colors.accent.teal} />
+        <TouchableOpacity onPress={handleAddPrayer} style={styles.addButton} disabled={isSaving}>
+          {isSaving ? (
+            <ActivityIndicator size="small" color={colors.accent.teal} />
+          ) : (
+            <Ionicons name="add" size={24} color={colors.accent.teal} />
+          )}
         </TouchableOpacity>
       </View>
 
@@ -141,96 +277,103 @@ export default function PrayerScheduleScreen() {
           Set your daily prayer times. Tap name to edit, tap time to change. You'll receive notifications when it's time to pray.
         </Text>
 
-        <View style={styles.prayerList}>
-          {settings.prayerSchedule.map((prayer) => (
-            <View key={prayer.id} style={styles.prayerItem}>
-              <View style={styles.prayerInfo}>
-                <View style={styles.prayerHeader}>
-                  {editingName === prayer.id ? (
-                    <TextInput
-                      style={styles.nameInput}
-                      value={tempName}
-                      onChangeText={setTempName}
-                      onBlur={() => handleNameChange(prayer.id, tempName)}
-                      onSubmitEditing={() => handleNameChange(prayer.id, tempName)}
-                      autoFocus
-                      placeholder="Prayer name"
-                      placeholderTextColor={colors.text.muted}
-                    />
-                  ) : (
-                    <TouchableOpacity
-                      onPress={() => handleNamePress(prayer)}
-                      style={styles.nameButton}
-                    >
-                      <Text style={[styles.prayerName, !prayer.enabled && styles.disabledText]}>
-                        {prayer.name}
-                      </Text>
-                      <Ionicons name="pencil" size={16} color={colors.text.muted} />
-                    </TouchableOpacity>
-                  )}
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.accent.teal} />
+            <Text style={styles.loadingText}>Loading prayer schedule...</Text>
+          </View>
+        ) : (
+          <View style={styles.prayerList}>
+            {schedule.map((prayer) => (
+              <View key={prayer.id} style={styles.prayerItem}>
+                <View style={styles.prayerInfo}>
+                  <View style={styles.prayerHeader}>
+                    {editingName === prayer.id ? (
+                      <TextInput
+                        style={styles.nameInput}
+                        value={tempName}
+                        onChangeText={setTempName}
+                        onBlur={() => handleNameChange(prayer.id, tempName)}
+                        onSubmitEditing={() => handleNameChange(prayer.id, tempName)}
+                        autoFocus
+                        placeholder="Prayer name"
+                        placeholderTextColor={colors.text.muted}
+                      />
+                    ) : (
+                      <TouchableOpacity
+                        onPress={() => handleNamePress(prayer)}
+                        style={styles.nameButton}
+                      >
+                        <Text style={[styles.prayerName, !prayer.enabled && styles.disabledText]}>
+                          {prayer.name}
+                        </Text>
+                        <Ionicons name="pencil" size={16} color={colors.text.muted} />
+                      </TouchableOpacity>
+                    )}
 
-                  <View style={styles.headerRight}>
-                    <Switch
-                      value={prayer.enabled}
-                      onValueChange={() => handleTogglePrayer(prayer.id)}
-                      trackColor={{ false: colors.card, true: colors.accent.teal }}
-                      thumbColor="#ffffff"
-                      ios_backgroundColor={colors.card}
-                    />
+                    <View style={styles.headerRight}>
+                      <Switch
+                        value={prayer.enabled}
+                        onValueChange={() => handleTogglePrayer(prayer.id)}
+                        trackColor={{ false: colors.card, true: colors.accent.teal }}
+                        thumbColor="#ffffff"
+                        ios_backgroundColor={colors.card}
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.controlsRow}>
+                    <TouchableOpacity
+                      style={[styles.timeButton, !prayer.enabled && styles.disabledButton]}
+                      onPress={() => prayer.enabled && handleTimePress(prayer)}
+                      disabled={!prayer.enabled}
+                    >
+                      <Ionicons
+                        name="time-outline"
+                        size={20}
+                        color={prayer.enabled ? colors.accent.amber : colors.text.muted}
+                      />
+                      <Text style={[styles.timeText, !prayer.enabled && styles.disabledText]}>
+                        {formatTime(prayer.time)}
+                      </Text>
+                      {prayer.enabled && (
+                        <Ionicons name="chevron-down" size={18} color={colors.text.muted} />
+                      )}
+                    </TouchableOpacity>
+
+                    {schedule.length > 1 && (
+                      <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={() => handleDeletePrayer(prayer.id)}
+                      >
+                        <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
 
-                <View style={styles.controlsRow}>
-                  <TouchableOpacity
-                    style={[styles.timeButton, !prayer.enabled && styles.disabledButton]}
-                    onPress={() => prayer.enabled && handleTimePress(prayer)}
-                    disabled={!prayer.enabled}
-                  >
-                    <Ionicons
-                      name="time-outline"
-                      size={20}
-                      color={prayer.enabled ? colors.accent.amber : colors.text.muted}
+                {editingTime === prayer.id && Platform.OS === 'ios' && (
+                  <View style={styles.timePickerContainer}>
+                    <DateTimePicker
+                      value={tempTime}
+                      mode="time"
+                      display="spinner"
+                      onChange={handleTimeChange}
+                      style={styles.timePicker}
+                      textColor={colors.text.primary}
                     />
-                    <Text style={[styles.timeText, !prayer.enabled && styles.disabledText]}>
-                      {formatTime(prayer.time)}
-                    </Text>
-                    {prayer.enabled && (
-                      <Ionicons name="chevron-down" size={18} color={colors.text.muted} />
-                    )}
-                  </TouchableOpacity>
-
-                  {settings.prayerSchedule.length > 1 && (
                     <TouchableOpacity
-                      style={styles.deleteButton}
-                      onPress={() => handleDeletePrayer(prayer.id)}
+                      style={styles.doneButton}
+                      onPress={handleDismissTimePicker}
                     >
-                      <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                      <Text style={styles.doneButtonText}>Done</Text>
                     </TouchableOpacity>
-                  )}
-                </View>
+                  </View>
+                )}
               </View>
-
-              {editingTime === prayer.id && Platform.OS === 'ios' && (
-                <View style={styles.timePickerContainer}>
-                  <DateTimePicker
-                    value={tempTime}
-                    mode="time"
-                    display="spinner"
-                    onChange={handleTimeChange}
-                    style={styles.timePicker}
-                    textColor={colors.text.primary}
-                  />
-                  <TouchableOpacity
-                    style={styles.doneButton}
-                    onPress={handleDismissTimePicker}
-                  >
-                    <Text style={styles.doneButtonText}>Done</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          ))}
-        </View>
+            ))}
+          </View>
+        )}
 
         <View style={styles.infoCard}>
           <Ionicons name="information-circle-outline" size={24} color={colors.accent.teal} />
@@ -293,6 +436,16 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 24,
     lineHeight: 20,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 48,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: colors.text.secondary,
   },
   prayerList: {
     gap: 16,
