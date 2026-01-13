@@ -69,10 +69,14 @@
           "ios": {
             "deploymentTarget": "15.1",
             "useFrameworks": "static"
+          },
+          "android": {
+            "minSdkVersion": 24
           }
         }
       ],
       "./plugins/withModularHeaders.js",
+      "./plugins/withPrayerOverlay",
       [
         "@react-native-google-signin/google-signin",
         {
