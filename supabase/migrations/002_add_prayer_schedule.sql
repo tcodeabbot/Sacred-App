@@ -7,7 +7,9 @@ CREATE TABLE public.prayer_schedule (
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   name TEXT NOT NULL,
   time TEXT NOT NULL, -- Format: "HH:mm" (24-hour)
+  duration INTEGER DEFAULT 5, -- Duration in minutes
   enabled BOOLEAN DEFAULT TRUE,
+  selected_prayer_id UUID REFERENCES public.prayers(id) ON DELETE SET NULL,
   sort_order INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -67,12 +69,12 @@ BEGIN
   VALUES (NEW.id);
 
   -- Create default prayer schedule
-  INSERT INTO public.prayer_schedule (user_id, name, time, enabled, sort_order)
+  INSERT INTO public.prayer_schedule (user_id, name, time, duration, enabled, sort_order)
   VALUES
-    (NEW.id, 'Morning Prayer', '07:00', true, 1),
-    (NEW.id, 'Noon Prayer', '12:00', true, 2),
-    (NEW.id, 'Evening Prayer', '18:00', true, 3),
-    (NEW.id, 'Night Prayer', '21:00', true, 4);
+    (NEW.id, 'Morning Prayer', '07:00', 5, true, 1),
+    (NEW.id, 'Noon Prayer', '12:00', 5, true, 2),
+    (NEW.id, 'Evening Prayer', '18:00', 5, true, 3),
+    (NEW.id, 'Night Prayer', '21:00', 5, true, 4);
 
   RETURN NEW;
 END;

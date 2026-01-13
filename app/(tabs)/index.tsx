@@ -133,7 +133,17 @@ export default function HomeScreen() {
             <Text style={styles.actionSubtitle}>2 min</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionCard} onPress={() => showLockScreen('Morning Prayer')}>
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={() => {
+              const firstScheduledPrayer = settings.prayerSchedule.find(p => p.enabled);
+              showLockScreen(
+                firstScheduledPrayer?.name || 'Prayer Time',
+                firstScheduledPrayer?.selectedPrayerId,
+                firstScheduledPrayer?.duration || 5
+              );
+            }}
+          >
             <View style={[styles.actionIcon, { backgroundColor: 'rgba(26, 155, 142, 0.2)' }]}>
               <Ionicons name="lock-closed" size={26} color={colors.accent.teal} />
             </View>

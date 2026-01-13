@@ -526,7 +526,9 @@ export async function updatePrayerSchedule(
         user_id: userId,
         name: item.name,
         time: item.time,
+        duration: item.duration,
         enabled: item.enabled,
+        selected_prayer_id: item.selectedPrayerId || null,
         sort_order: index + 1,
       }))
     )
@@ -538,7 +540,9 @@ export async function updatePrayerSchedule(
     id: item.id,
     name: item.name,
     time: item.time,
+    duration: item.duration,
     enabled: item.enabled,
+    selectedPrayerId: item.selected_prayer_id || undefined,
   })) as PrayerScheduleItem[];
 }
 

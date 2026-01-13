@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIn
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { colors } from '@/constants/colors';
 import { useAuthStore } from '@/store/useAuthStore';
 import { UserPrayer, PrayerCollection } from '@/types';
@@ -133,34 +133,6 @@ export default function PrayersScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    if (!user?.id) {
-      setPrayers(LOCAL_PRAYERS);
-      setCollections([]);
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const [prayersData, collectionsData] = await Promise.all([
-        getUserPrayers(user.id),
-        getPrayerCollections(user.id),
-      ]);
-      setPrayers(prayersData);
-      setCollections(collectionsData);
-    } catch (error) {
-      console.error('Error fetching prayers:', error);
-      Alert.alert('Error', 'Failed to load prayers. Please try again.');
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [user?.id]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
   const fetchFilteredPrayers = useCallback(async () => {
     if (!user?.id) return;
 
@@ -181,11 +153,41 @@ export default function PrayersScreen() {
     }
   }, [user?.id, activeFilter]);
 
+  const fetchData = useCallback(async () => {
+    if (!user?.id) {
+      setPrayers(LOCAL_PRAYERS);
+      setCollections([]);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Fetch collections first as they are needed for tabs
+      const collectionsData = await getPrayerCollections(user.id);
+      setCollections(collectionsData);
+
+      // Then fetch prayers based on current filter
+      await fetchFilteredPrayers();
+    } catch (error) {
+      console.error('Error fetching prayers:', error);
+      Alert.alert('Error', 'Failed to load prayers. Please try again.');
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, [user?.id, fetchFilteredPrayers]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData])
+  );
+
   useEffect(() => {
     if (!isLoading && user?.id) {
       fetchFilteredPrayers();
     }
-  }, [activeFilter, isLoading, fetchFilteredPrayers, user?.id]);
+  }, [activeFilter, isLoading, user?.id]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);

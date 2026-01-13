@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { BlockedApp, PrayerSession, UserSettings, UserStats, Scripture, ScriptureReflection } from '@/types';
 import { blockedApps as defaultApps, scriptures } from '@/constants/prayers';
+import { getPrayerSchedule } from '@/lib/database';
+import { syncPrayerScheduleItems } from '@/services/notificationService';
 
 interface AppState {
   // Onboarding
@@ -35,6 +37,7 @@ interface AppState {
   triggerIntercept: (app: BlockedApp) => void;
   dismissIntercept: () => void;
   resetForDemo: () => void;
+  loadPrayerSchedule: (userId: string) => Promise<void>;
 
   // New actions for Phase 2
   startPrayerWithMode: (mode: 'silent' | 'scripture' | 'written', intent?: string, triggeredBy?: string) => void;
@@ -398,4 +401,25 @@ export const useAppStore = create<AppState>((set, get) => ({
     todaysScripture: scriptures[0],
     weeklyInsight: null,
   }),
+
+  loadPrayerSchedule: async (userId: string) => {
+    try {
+      const schedule = await getPrayerSchedule(userId);
+
+      // Update settings with loaded schedule
+      set((state) => ({
+        settings: {
+          ...state.settings,
+          prayerSchedule: schedule,
+        },
+      }));
+
+      // Sync with notification system
+      await syncPrayerScheduleItems(schedule);
+      console.log('Prayer schedule loaded and synced with notifications');
+    } catch (error) {
+      console.error('Error loading prayer schedule:', error);
+      // Keep using local settings on error
+    }
+  },
 }));

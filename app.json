@@ -37,6 +37,11 @@
         "backgroundColor": "#0d0d0d"
       },
       "package": "com.sacred.app",
+      "permissions": [
+        "USE_FULL_SCREEN_INTENT",
+        "SYSTEM_ALERT_WINDOW",
+        "WAKE_LOCK"
+      ],
       "intentFilters": [
         {
           "action": "VIEW",

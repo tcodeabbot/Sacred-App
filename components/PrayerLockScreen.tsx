@@ -20,6 +20,7 @@ interface PrayerLockScreenProps {
   onStartPrayer: () => void;
   scheduleName?: string;
   blockedApps?: string[];
+  duration?: number; // Duration in minutes
 }
 
 const { width, height } = Dimensions.get('window');
@@ -30,9 +31,15 @@ export function PrayerLockScreen({
   onStartPrayer,
   scheduleName = 'Prayer Time',
   blockedApps = [],
+  duration = 5, // Default 5 minutes
 }: PrayerLockScreenProps) {
-  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes default
+  const [timeLeft, setTimeLeft] = useState(duration * 60); // Convert minutes to seconds
   const router = useRouter();
+
+  // Update timeLeft when duration changes
+  useEffect(() => {
+    setTimeLeft(duration * 60);
+  }, [duration, visible]);
 
   useEffect(() => {
     if (!visible) return;

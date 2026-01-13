@@ -306,10 +306,6 @@ export default function PrayerScheduleScreen() {
   };
 
   const handleDeletePrayer = (prayerId: string) => {
-    if (schedule.length <= 1) {
-      Alert.alert('Cannot Delete', 'You must have at least one prayer in your schedule.');
-      return;
-    }
 
     Alert.alert(
       'Delete Prayer',
@@ -370,175 +366,189 @@ export default function PrayerScheduleScreen() {
           </View>
         ) : (
           <View style={styles.prayerList}>
-            {schedule.map((prayer) => (
-              <View key={prayer.id} style={styles.prayerItem}>
-                <View style={styles.prayerInfo}>
-                  <View style={styles.prayerHeader}>
-                    {editingName === prayer.id ? (
-                      <TextInput
-                        style={styles.nameInput}
-                        value={tempName}
-                        onChangeText={setTempName}
-                        onBlur={() => handleNameChange(prayer.id, tempName)}
-                        onSubmitEditing={() => handleNameChange(prayer.id, tempName)}
-                        autoFocus
-                        placeholder="Prayer name"
-                        placeholderTextColor={colors.text.muted}
-                      />
-                    ) : (
-                      <TouchableOpacity
-                        onPress={() => handleNamePress(prayer)}
-                        style={styles.nameButton}
-                      >
-                        <Text style={[styles.prayerName, !prayer.enabled && styles.disabledText]}>
-                          {prayer.name}
-                        </Text>
-                        <Ionicons name="pencil" size={16} color={colors.text.muted} />
-                      </TouchableOpacity>
-                    )}
-
-                    <View style={styles.headerRight}>
-                      <Switch
-                        value={prayer.enabled}
-                        onValueChange={() => handleTogglePrayer(prayer.id)}
-                        trackColor={{ false: colors.card, true: colors.accent.teal }}
-                        thumbColor="#ffffff"
-                        ios_backgroundColor={colors.card}
-                      />
-                    </View>
-                  </View>
-
-                  <View style={styles.controlsRow}>
-                    <TouchableOpacity
-                      style={[styles.timeButton, !prayer.enabled && styles.disabledButton]}
-                      onPress={() => prayer.enabled && handleTimePress(prayer)}
-                      disabled={!prayer.enabled}
-                    >
-                      <Ionicons
-                        name="time-outline"
-                        size={20}
-                        color={prayer.enabled ? colors.accent.amber : colors.text.muted}
-                      />
-                      <Text style={[styles.timeText, !prayer.enabled && styles.disabledText]}>
-                        {formatTime(prayer.time)}
-                      </Text>
-                      {prayer.enabled && (
-                        <Ionicons name="chevron-down" size={18} color={colors.text.muted} />
+            {schedule.length > 0 ? (
+              schedule.map((prayer) => (
+                <View key={prayer.id} style={styles.prayerItem}>
+                  <View style={styles.prayerInfo}>
+                    <View style={styles.prayerHeader}>
+                      {editingName === prayer.id ? (
+                        <TextInput
+                          style={styles.nameInput}
+                          value={tempName}
+                          onChangeText={setTempName}
+                          onBlur={() => handleNameChange(prayer.id, tempName)}
+                          onSubmitEditing={() => handleNameChange(prayer.id, tempName)}
+                          autoFocus
+                          placeholder="Prayer name"
+                          placeholderTextColor={colors.text.muted}
+                        />
+                      ) : (
+                        <TouchableOpacity
+                          onPress={() => handleNamePress(prayer)}
+                          style={styles.nameButton}
+                        >
+                          <Text style={[styles.prayerName, !prayer.enabled && styles.disabledText]}>
+                            {prayer.name}
+                          </Text>
+                          <Ionicons name="pencil" size={16} color={colors.text.muted} />
+                        </TouchableOpacity>
                       )}
-                    </TouchableOpacity>
 
-                    <TouchableOpacity
-                      style={[styles.durationButton, !prayer.enabled && styles.disabledButton]}
-                      onPress={() => prayer.enabled && showDurationPicker(prayer)}
-                      disabled={!prayer.enabled}
-                    >
-                      <Ionicons
-                        name="hourglass-outline"
-                        size={18}
-                        color={prayer.enabled ? colors.accent.purple : colors.text.muted}
-                      />
-                      <Text style={[styles.durationText, !prayer.enabled && styles.disabledText]}>
-                        {formatDuration(prayer.duration || 5)}
-                      </Text>
-                    </TouchableOpacity>
+                      <View style={styles.headerRight}>
+                        <Switch
+                          value={prayer.enabled}
+                          onValueChange={() => handleTogglePrayer(prayer.id)}
+                          trackColor={{ false: colors.card, true: colors.accent.teal }}
+                          thumbColor="#ffffff"
+                          ios_backgroundColor={colors.card}
+                        />
+                      </View>
+                    </View>
 
-                    {schedule.length > 1 && (
+                    <View style={styles.controlsRow}>
+                      <TouchableOpacity
+                        style={[styles.timeButton, !prayer.enabled && styles.disabledButton]}
+                        onPress={() => prayer.enabled && handleTimePress(prayer)}
+                        disabled={!prayer.enabled}
+                      >
+                        <Ionicons
+                          name="time-outline"
+                          size={20}
+                          color={prayer.enabled ? colors.accent.amber : colors.text.muted}
+                        />
+                        <Text style={[styles.timeText, !prayer.enabled && styles.disabledText]}>
+                          {formatTime(prayer.time)}
+                        </Text>
+                        {prayer.enabled && (
+                          <Ionicons name="chevron-down" size={18} color={colors.text.muted} />
+                        )}
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[styles.durationButton, !prayer.enabled && styles.disabledButton]}
+                        onPress={() => prayer.enabled && showDurationPicker(prayer)}
+                        disabled={!prayer.enabled}
+                      >
+                        <Ionicons
+                          name="hourglass-outline"
+                          size={18}
+                          color={prayer.enabled ? colors.accent.purple : colors.text.muted}
+                        />
+                        <Text style={[styles.durationText, !prayer.enabled && styles.disabledText]}>
+                          {formatDuration(prayer.duration || 5)}
+                        </Text>
+                      </TouchableOpacity>
+
                       <TouchableOpacity
                         style={styles.deleteButton}
                         onPress={() => handleDeletePrayer(prayer.id)}
                       >
                         <Ionicons name="trash-outline" size={20} color="#EF4444" />
                       </TouchableOpacity>
-                    )}
-                  </View>
+                    </View>
 
-                  {/* Prayer Selector Row */}
-                  {prayer.enabled && user?.id && (
-                    <TouchableOpacity
-                      style={styles.prayerSelectorRow}
-                      onPress={() => setSelectingPrayerFor(
-                        selectingPrayerFor === prayer.id ? null : prayer.id
-                      )}
-                    >
-                      <Ionicons
-                        name="book-outline"
-                        size={18}
-                        color={colors.accent.teal}
-                      />
-                      <Text style={styles.prayerSelectorText}>
-                        {getSelectedPrayerName(prayer.selectedPrayerId)}
-                      </Text>
-                      <Ionicons
-                        name={selectingPrayerFor === prayer.id ? 'chevron-up' : 'chevron-down'}
-                        size={18}
-                        color={colors.text.muted}
-                      />
-                    </TouchableOpacity>
-                  )}
-
-                  {/* Prayer Selection Dropdown */}
-                  {selectingPrayerFor === prayer.id && (
-                    <View style={styles.prayerPickerContainer}>
+                    {/* Prayer Selector Row */}
+                    {prayer.enabled && user?.id && (
                       <TouchableOpacity
-                        style={[
-                          styles.prayerPickerOption,
-                          !prayer.selectedPrayerId && styles.prayerPickerOptionActive,
-                        ]}
-                        onPress={() => handleSelectPrayer(prayer.id, undefined)}
+                        style={styles.prayerSelectorRow}
+                        onPress={() => setSelectingPrayerFor(
+                          selectingPrayerFor === prayer.id ? null : prayer.id
+                        )}
                       >
-                        <Text style={[
-                          styles.prayerPickerOptionText,
-                          !prayer.selectedPrayerId && styles.prayerPickerOptionTextActive,
-                        ]}>
-                          None
+                        <Ionicons
+                          name="book-outline"
+                          size={18}
+                          color={colors.accent.teal}
+                        />
+                        <Text style={styles.prayerSelectorText}>
+                          {getSelectedPrayerName(prayer.selectedPrayerId)}
                         </Text>
+                        <Ionicons
+                          name={selectingPrayerFor === prayer.id ? 'chevron-up' : 'chevron-down'}
+                          size={18}
+                          color={colors.text.muted}
+                        />
                       </TouchableOpacity>
-                      {userPrayers.map((userPrayer) => (
+                    )}
+
+                    {/* Prayer Selection Dropdown */}
+                    {selectingPrayerFor === prayer.id && (
+                      <View style={styles.prayerPickerContainer}>
                         <TouchableOpacity
-                          key={userPrayer.id}
                           style={[
                             styles.prayerPickerOption,
-                            prayer.selectedPrayerId === userPrayer.id && styles.prayerPickerOptionActive,
+                            !prayer.selectedPrayerId && styles.prayerPickerOptionActive,
                           ]}
-                          onPress={() => handleSelectPrayer(prayer.id, userPrayer.id)}
+                          onPress={() => handleSelectPrayer(prayer.id, undefined)}
                         >
                           <Text style={[
                             styles.prayerPickerOptionText,
-                            prayer.selectedPrayerId === userPrayer.id && styles.prayerPickerOptionTextActive,
+                            !prayer.selectedPrayerId && styles.prayerPickerOptionTextActive,
                           ]}>
-                            {userPrayer.title}
+                            None
                           </Text>
                         </TouchableOpacity>
-                      ))}
-                      {userPrayers.length === 0 && (
-                        <Text style={styles.noPrayersText}>
-                          No prayers yet. Create some in the Prayers tab.
-                        </Text>
-                      )}
+                        {userPrayers.map((userPrayer) => (
+                          <TouchableOpacity
+                            key={userPrayer.id}
+                            style={[
+                              styles.prayerPickerOption,
+                              prayer.selectedPrayerId === userPrayer.id && styles.prayerPickerOptionActive,
+                            ]}
+                            onPress={() => handleSelectPrayer(prayer.id, userPrayer.id)}
+                          >
+                            <Text style={[
+                              styles.prayerPickerOptionText,
+                              prayer.selectedPrayerId === userPrayer.id && styles.prayerPickerOptionTextActive,
+                            ]}>
+                              {userPrayer.title}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                        {userPrayers.length === 0 && (
+                          <Text style={styles.noPrayersText}>
+                            No prayers yet. Create some in the Prayers tab.
+                          </Text>
+                        )}
+                      </View>
+                    )}
+                  </View>
+
+                  {editingTime === prayer.id && Platform.OS === 'ios' && (
+                    <View style={styles.timePickerContainer}>
+                      <DateTimePicker
+                        value={tempTime}
+                        mode="time"
+                        display="spinner"
+                        onChange={handleTimeChange}
+                        style={styles.timePicker}
+                        textColor={colors.text.primary}
+                      />
+                      <TouchableOpacity
+                        style={styles.doneButton}
+                        onPress={handleDismissTimePicker}
+                      >
+                        <Text style={styles.doneButtonText}>Done</Text>
+                      </TouchableOpacity>
                     </View>
                   )}
                 </View>
-
-                {editingTime === prayer.id && Platform.OS === 'ios' && (
-                  <View style={styles.timePickerContainer}>
-                    <DateTimePicker
-                      value={tempTime}
-                      mode="time"
-                      display="spinner"
-                      onChange={handleTimeChange}
-                      style={styles.timePicker}
-                      textColor={colors.text.primary}
-                    />
-                    <TouchableOpacity
-                      style={styles.doneButton}
-                      onPress={handleDismissTimePicker}
-                    >
-                      <Text style={styles.doneButtonText}>Done</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
+              ))
+            ) : (
+              <View style={styles.emptyState}>
+                <View style={styles.emptyIconContainer}>
+                  <Ionicons name="calendar-outline" size={48} color={colors.text.muted} />
+                </View>
+                <Text style={styles.emptyTitle}>No prayers scheduled</Text>
+                <Text style={styles.emptySubtitle}>
+                  Add your first prayer to start building your daily spiritual routine.
+                </Text>
+                <TouchableOpacity style={styles.emptyAddButton} onPress={handleAddPrayer}>
+                  <Ionicons name="add" size={20} color="#ffffff" />
+                  <Text style={styles.emptyAddButtonText}>Add Prayer</Text>
+                </TouchableOpacity>
               </View>
-            ))}
+            )}
           </View>
         )}
 
@@ -791,5 +801,52 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     padding: 14,
     textAlign: 'center',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 48,
+    backgroundColor: colors.card,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderStyle: 'dashed',
+  },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text.primary,
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    textAlign: 'center',
+    paddingHorizontal: 40,
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  emptyAddButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.accent.teal,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+  },
+  emptyAddButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
   },
 });
