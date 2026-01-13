@@ -1,13 +1,16 @@
-const { withAndroidManifest, AndroidConfig } = require('@expo/config-plugins');
-const path = require('path');
-const fs = require('fs');
+const {
+  withAndroidManifest,
+  withInfoPlist,
+  withEntitlementsPlist,
+  AndroidConfig
+} = require('@expo/config-plugins');
 
 /**
  * Expo Config Plugin for Prayer Overlay
- * Adds native Android code for full-screen prayer interruption
+ * Supports both iOS (Screen Time API) and Android (Native Overlay)
  */
 module.exports = function withPrayerOverlay(config) {
-  // Add Android manifest modifications
+  // Configure Android
   config = withAndroidManifest(config, async (config) => {
     const androidManifest = config.modResults;
 
@@ -61,27 +64,49 @@ module.exports = function withPrayerOverlay(config) {
     return config;
   });
 
-  // Copy native Android files during prebuild
+  // Configure iOS Info.plist
+  config = withInfoPlist(config, (config) => {
+    // Add Family Controls usage description
+    config.modResults.NSFamilyControlsUsageDescription =
+      'Sacred uses Screen Time features to help you stay focused during prayer times by blocking distracting apps.';
+
+    return config;
+  });
+
+  // Configure iOS Entitlements
+  config = withEntitlementsPlist(config, (config) => {
+    // Add Family Controls entitlement
+    // Note: This requires Apple approval
+    config.modResults['com.apple.developer.family-controls'] = true;
+
+    return config;
+  });
+
+  // Copy native files during prebuild
   config = withCopyNativeFiles(config);
 
   return config;
 };
 
 /**
- * Copies native Android files to the project
+ * Copies native files to the project
  */
 function withCopyNativeFiles(config) {
   return {
     ...config,
-    // Hook into the prebuild process
     mods: {
       ...config.mods,
       android: {
         ...config.mods?.android,
-        // Copy Java files
         async dangerouslyModifyAndroidMainApplicationJava(config) {
-          // This will be called during prebuild
           console.log('📦 Copying native Android prayer overlay files...');
+          return config;
+        },
+      },
+      ios: {
+        ...config.mods?.ios,
+        async dangerouslyModifyPodfile(config) {
+          console.log('📦 Configuring iOS for Screen Time API...');
           return config;
         },
       },

@@ -16,12 +16,14 @@ import {
   requestNotificationPermissions,
   syncPrayerScheduleItems,
 } from '@/services/notificationService';
+
+// Unified prayer interruption service (Android + iOS)
 import {
-  initializeNativePrayerOverlay,
-  updatePrayerSchedule as updateNativePrayerSchedule,
-  addPrayerCompletedListener,
-  addPrayerDismissedListener,
-} from '@/services/nativePrayerOverlay';
+  initializePrayerInterruption,
+  updatePrayerSchedule as updateUnifiedPrayerSchedule,
+  addPrayerEventListeners,
+  getPrayerInterruptionInfo,
+} from '@/services/prayerInterruption';
 
 export default function RootLayout() {
   const router = useRouter();
@@ -34,6 +36,10 @@ export default function RootLayout() {
     // Initialize auth
     initializeAuth();
 
+    // Log prayer interruption capabilities
+    const info = getPrayerInterruptionInfo();
+    console.log('🙏 Prayer Interruption:', info);
+
     // Initialize notification listeners
     const setupNotifications = async () => {
       // Request permissions
@@ -44,31 +50,19 @@ export default function RootLayout() {
         await syncPrayerScheduleItems(settings.prayerSchedule);
         console.log('Prayer schedules synced with notifications');
 
-        // Initialize native prayer overlay (Android only)
-        if (Platform.OS === 'android') {
-          await initializeNativePrayerOverlay(settings.prayerSchedule);
-        }
+        // Initialize unified prayer interruption (both iOS and Android)
+        await initializePrayerInterruption(settings.prayerSchedule);
       }
     };
 
     setupNotifications();
 
-    // Listen for native prayer events (Android only)
-    if (Platform.OS === 'android') {
-      const unsubscribeCompleted = addPrayerCompletedListener((scheduleId) => {
-        console.log('✅ Prayer completed from native:', scheduleId);
-        // Prayer was started from native overlay, user is now in app
-      });
+    // Listen for prayer events (Android only)
+    const unsubscribe = addPrayerEventListeners();
 
-      const unsubscribeDismissed = addPrayerDismissedListener((scheduleId) => {
-        console.log('❌ Prayer dismissed from native:', scheduleId);
-      });
-
-      return () => {
-        unsubscribeCompleted();
-        unsubscribeDismissed();
-      };
-    }
+    return () => {
+      unsubscribe();
+    };
 
     // Listen for notification taps (when app is in background)
     const subscription1 = addNotificationResponseListener((response) => {
@@ -147,17 +141,15 @@ export default function RootLayout() {
     loadSchedule();
   }, [user?.id]);
 
-  // Sync notifications whenever prayer schedule changes
+  // Sync notifications and prayer interruption whenever prayer schedule changes
   useEffect(() => {
     const syncSchedules = async () => {
       await syncPrayerScheduleItems(settings.prayerSchedule);
 
-      // Also update native service (Android only)
-      if (Platform.OS === 'android') {
-        await updateNativePrayerSchedule(settings.prayerSchedule);
-      }
+      // Update unified prayer schedule (both Android and iOS)
+      await updateUnifiedPrayerSchedule(settings.prayerSchedule);
 
-      console.log('Prayer schedules updated');
+      console.log('Prayer schedules updated for both notifications and interruption');
     };
 
     syncSchedules();
