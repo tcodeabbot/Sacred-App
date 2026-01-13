@@ -1,6 +1,7 @@
 import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
 import { PrayerScheduleItem } from '@/types';
 
+// Android module interface
 interface PrayerOverlayModule {
   checkOverlayPermission(): Promise<boolean>;
   requestOverlayPermission(): Promise<boolean>;
@@ -14,6 +15,23 @@ interface PrayerOverlayModule {
   updatePrayerSchedule(prayerSchedule: PrayerScheduleItem[]): Promise<boolean>;
 }
 
+// iOS Screen Time module interface
+interface PrayerScreenTimeModule {
+  checkAuthorization(): Promise<boolean>;
+  requestAuthorization(): Promise<boolean>;
+  presentAppSelectorUI(): Promise<boolean>;
+  saveSelectedApps(appTokensJSON: string): Promise<boolean>;
+  schedulePrayerBlock(config: {
+    prayerName: string;
+    startTime: string;
+    duration: number;
+  }): Promise<boolean>;
+  cancelPrayerBlock(prayerName: string): Promise<boolean>;
+  cancelAllPrayerBlocks(): Promise<boolean>;
+  activateShieldNow(): Promise<boolean>;
+  deactivateShield(): Promise<boolean>;
+}
+
 const LINKING_ERROR =
   `The package 'PrayerOverlay' doesn't seem to be linked. Make sure: \n\n` +
   Platform.select({ ios: "- You have run 'pod install'\n", default: '' }) +
@@ -21,9 +39,20 @@ const LINKING_ERROR =
   '- You ran "expo prebuild"\n' +
   '- You are not using Expo Go\n';
 
-// Get the native module
+// Get the native modules
 const PrayerOverlay: PrayerOverlayModule = NativeModules.PrayerOverlay
   ? NativeModules.PrayerOverlay
+  : new Proxy(
+      {},
+      {
+        get() {
+          throw new Error(LINKING_ERROR);
+        },
+      }
+    );
+
+const PrayerScreenTime: PrayerScreenTimeModule = NativeModules.PrayerScreenTimeModule
+  ? NativeModules.PrayerScreenTimeModule
   : new Proxy(
       {},
       {
@@ -204,33 +233,201 @@ export function addPrayerDismissedListener(
 export async function initializeNativePrayerOverlay(
   prayerSchedule: PrayerScheduleItem[]
 ): Promise<boolean> {
-  if (Platform.OS !== 'android') {
-    console.log('Native overlay not available on iOS, using notifications');
-    return true;
+  if (Platform.OS === 'android') {
+    try {
+      // Check permission
+      const hasPermission = await checkOverlayPermission();
+
+      if (!hasPermission) {
+        console.warn('⚠️ Overlay permission not granted. Requesting...');
+        await requestOverlayPermission();
+        return false;
+      }
+
+      // Start monitoring
+      const success = await startPrayerMonitoring(prayerSchedule);
+
+      if (success) {
+        console.log('✅ Native prayer overlay initialized successfully');
+      } else {
+        console.error('❌ Failed to initialize native prayer overlay');
+      }
+
+      return success;
+    } catch (error) {
+      console.error('Error initializing native prayer overlay:', error);
+      return false;
+    }
+  } else if (Platform.OS === 'ios') {
+    try {
+      // Check Screen Time authorization
+      const hasAuth = await checkScreenTimeAuthorization();
+
+      if (!hasAuth) {
+        console.warn('⚠️ Screen Time authorization not granted. Requesting...');
+        await requestScreenTimeAuthorization();
+        return false;
+      }
+
+      // Schedule all enabled prayers
+      const success = await scheduleAllPrayers(prayerSchedule);
+
+      if (success) {
+        console.log('✅ iOS Screen Time prayer blocking initialized successfully');
+      } else {
+        console.error('❌ Failed to initialize iOS Screen Time prayer blocking');
+      }
+
+      return success;
+    } catch (error) {
+      console.error('Error initializing iOS Screen Time:', error);
+      return false;
+    }
+  }
+
+  return false;
+}
+
+// ===========================
+// iOS Screen Time API Methods
+// ===========================
+
+/**
+ * Check if Screen Time authorization is granted (iOS only)
+ */
+export async function checkScreenTimeAuthorization(): Promise<boolean> {
+  if (Platform.OS !== 'ios') {
+    return false;
   }
 
   try {
-    // Check permission
-    const hasPermission = await checkOverlayPermission();
-
-    if (!hasPermission) {
-      console.warn('⚠️ Overlay permission not granted. Requesting...');
-      await requestOverlayPermission();
-      return false;
-    }
-
-    // Start monitoring
-    const success = await startPrayerMonitoring(prayerSchedule);
-
-    if (success) {
-      console.log('✅ Native prayer overlay initialized successfully');
-    } else {
-      console.error('❌ Failed to initialize native prayer overlay');
-    }
-
-    return success;
+    return await PrayerScreenTime.checkAuthorization();
   } catch (error) {
-    console.error('Error initializing native prayer overlay:', error);
+    console.error('Error checking Screen Time authorization:', error);
+    return false;
+  }
+}
+
+/**
+ * Request Screen Time authorization (iOS only)
+ * User will see Apple's permission dialog
+ */
+export async function requestScreenTimeAuthorization(): Promise<boolean> {
+  if (Platform.OS !== 'ios') {
+    return false;
+  }
+
+  try {
+    return await PrayerScreenTime.requestAuthorization();
+  } catch (error) {
+    console.error('Error requesting Screen Time authorization:', error);
+    return false;
+  }
+}
+
+/**
+ * Present app selector UI (iOS only)
+ * Shows Apple's native app picker
+ */
+export async function presentAppSelector(): Promise<boolean> {
+  if (Platform.OS !== 'ios') {
+    console.warn('App selector only available on iOS');
+    return false;
+  }
+
+  try {
+    return await PrayerScreenTime.presentAppSelectorUI();
+  } catch (error) {
+    console.error('Error presenting app selector:', error);
+    return false;
+  }
+}
+
+/**
+ * Schedule prayer blocking for iOS Screen Time
+ */
+export async function schedulePrayerBlock(
+  prayerName: string,
+  startTime: string,
+  duration: number
+): Promise<boolean> {
+  if (Platform.OS !== 'ios') {
+    return false;
+  }
+
+  try {
+    return await PrayerScreenTime.schedulePrayerBlock({
+      prayerName,
+      startTime,
+      duration,
+    });
+  } catch (error) {
+    console.error('Error scheduling prayer block:', error);
+    return false;
+  }
+}
+
+/**
+ * Cancel specific prayer block (iOS only)
+ */
+export async function cancelPrayerBlock(prayerName: string): Promise<boolean> {
+  if (Platform.OS !== 'ios') {
+    return false;
+  }
+
+  try {
+    return await PrayerScreenTime.cancelPrayerBlock(prayerName);
+  } catch (error) {
+    console.error('Error cancelling prayer block:', error);
+    return false;
+  }
+}
+
+/**
+ * Cancel all prayer blocks (iOS only)
+ */
+export async function cancelAllPrayerBlocks(): Promise<boolean> {
+  if (Platform.OS !== 'ios') {
+    return false;
+  }
+
+  try {
+    return await PrayerScreenTime.cancelAllPrayerBlocks();
+  } catch (error) {
+    console.error('Error cancelling all prayer blocks:', error);
+    return false;
+  }
+}
+
+/**
+ * Schedule all enabled prayers for iOS
+ */
+async function scheduleAllPrayers(
+  prayerSchedule: PrayerScheduleItem[]
+): Promise<boolean> {
+  if (Platform.OS !== 'ios') {
+    return false;
+  }
+
+  try {
+    // Cancel all existing schedules first
+    await cancelAllPrayerBlocks();
+
+    // Schedule each enabled prayer
+    const enabledPrayers = prayerSchedule.filter(p => p.enabled);
+
+    for (const prayer of enabledPrayers) {
+      await schedulePrayerBlock(
+        prayer.name || 'Prayer',
+        prayer.time,
+        prayer.duration || 5
+      );
+    }
+
+    console.log(`✅ Scheduled ${enabledPrayers.length} prayers for iOS Screen Time blocking`);
+    return true;
+  } catch (error) {
+    console.error('Error scheduling all prayers:', error);
     return false;
   }
 }
