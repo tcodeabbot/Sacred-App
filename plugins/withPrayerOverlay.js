@@ -14,19 +14,6 @@ module.exports = function withPrayerOverlay(config) {
   config = withAndroidManifest(config, async (config) => {
     const androidManifest = config.modResults;
 
-    // Add permissions
-    AndroidConfig.Manifest.addMetaDataItemToMainApplication(
-      androidManifest,
-      'android.permission.SYSTEM_ALERT_WINDOW',
-      'true'
-    );
-
-    AndroidConfig.Manifest.addMetaDataItemToMainApplication(
-      androidManifest,
-      'android.permission.FOREGROUND_SERVICE',
-      'true'
-    );
-
     // Add service declaration
     const application = androidManifest.manifest.application[0];
 
