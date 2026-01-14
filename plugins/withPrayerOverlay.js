@@ -30,33 +30,45 @@ module.exports = function withPrayerOverlay(config) {
     // Add service declaration
     const application = androidManifest.manifest.application[0];
 
-    // Add PrayerOverlayService
+    // Add PrayerOverlayService (only if it doesn't exist)
     if (!application.service) {
       application.service = [];
     }
 
-    application.service.push({
-      $: {
-        'android:name': '.prayer.PrayerOverlayService',
-        'android:enabled': 'true',
-        'android:exported': 'false',
-        'android:foregroundServiceType': 'specialUse',
-      },
-    });
+    const serviceExists = application.service.some(
+      (service) => service.$['android:name'] === '.prayer.PrayerOverlayService'
+    );
 
-    // Add PrayerOverlayActivity
+    if (!serviceExists) {
+      application.service.push({
+        $: {
+          'android:name': '.prayer.PrayerOverlayService',
+          'android:enabled': 'true',
+          'android:exported': 'false',
+          'android:foregroundServiceType': 'specialUse',
+        },
+      });
+    }
+
+    // Add PrayerOverlayActivity (only if it doesn't exist)
     if (!application.activity) {
       application.activity = [];
     }
 
-    application.activity.push({
-      $: {
-        'android:name': '.prayer.PrayerOverlayActivity',
-        'android:launchMode': 'singleTop',
-        'android:excludeFromRecents': 'true',
-        'android:exported': 'true',
-      },
-    });
+    const activityExists = application.activity.some(
+      (activity) => activity.$['android:name'] === '.prayer.PrayerOverlayActivity'
+    );
+
+    if (!activityExists) {
+      application.activity.push({
+        $: {
+          'android:name': '.prayer.PrayerOverlayActivity',
+          'android:launchMode': 'singleTop',
+          'android:excludeFromRecents': 'true',
+          'android:exported': 'true',
+        },
+      });
+    }
 
     return config;
   });
