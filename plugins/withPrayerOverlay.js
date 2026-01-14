@@ -52,11 +52,8 @@ module.exports = function withPrayerOverlay(config) {
     application.activity.push({
       $: {
         'android:name': '.prayer.PrayerOverlayActivity',
-        'android:theme': '@style/Theme.App.PrayerOverlay',
         'android:launchMode': 'singleTop',
         'android:excludeFromRecents': 'true',
-        'android:showOnLockScreen': 'true',
-        'android:turnScreenOn': 'true',
         'android:exported': 'true',
       },
     });
