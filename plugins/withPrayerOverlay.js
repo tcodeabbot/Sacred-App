@@ -92,24 +92,76 @@ module.exports = function withPrayerOverlay(config) {
  * Copies native files to the project
  */
 function withCopyNativeFiles(config) {
-  return {
-    ...config,
-    mods: {
-      ...config.mods,
-      android: {
-        ...config.mods?.android,
-        async dangerouslyModifyAndroidMainApplicationJava(config) {
-          console.log('📦 Copying native Android prayer overlay files...');
-          return config;
-        },
-      },
-      ios: {
-        ...config.mods?.ios,
-        async dangerouslyModifyPodfile(config) {
-          console.log('📦 Configuring iOS for Screen Time API...');
-          return config;
-        },
-      },
+  const { withDangerousMod } = require('@expo/config-plugins');
+  const fs = require('fs');
+  const path = require('path');
+
+  // Copy Android native files
+  config = withDangerousMod(config, [
+    'android',
+    async (config) => {
+      const projectRoot = config.modRequest.projectRoot;
+      const sourceDir = path.join(projectRoot, 'android-native/prayer');
+      const targetDir = path.join(
+        projectRoot,
+        'android/app/src/main/java/com/sacred/app/prayer'
+      );
+
+      // Only copy if source directory exists
+      if (fs.existsSync(sourceDir)) {
+        console.log('📦 Copying native Android prayer overlay files...');
+
+        // Create target directory
+        if (!fs.existsSync(targetDir)) {
+          fs.mkdirSync(targetDir, { recursive: true });
+        }
+
+        // Copy all Java files
+        const files = fs.readdirSync(sourceDir);
+        files.forEach((file) => {
+          if (file.endsWith('.java')) {
+            const sourcePath = path.join(sourceDir, file);
+            const targetPath = path.join(targetDir, file);
+            fs.copyFileSync(sourcePath, targetPath);
+            console.log(`  ✅ Copied ${file}`);
+          }
+        });
+
+        // Update MainApplication.kt to register the package
+        const mainAppPath = path.join(
+          projectRoot,
+          'android/app/src/main/java/com/sacred/app/MainApplication.kt'
+        );
+
+        if (fs.existsSync(mainAppPath)) {
+          let mainAppContent = fs.readFileSync(mainAppPath, 'utf8');
+
+          // Add import if not present
+          if (!mainAppContent.includes('import com.sacred.app.prayer.PrayerOverlayPackage')) {
+            mainAppContent = mainAppContent.replace(
+              /(package com\.sacred\.app)/,
+              '$1\n\nimport com.sacred.app.prayer.PrayerOverlayPackage'
+            );
+          }
+
+          // Add package to the list if not present
+          if (!mainAppContent.includes('PrayerOverlayPackage()')) {
+            mainAppContent = mainAppContent.replace(
+              /(packages\.add\(.*?\))/s,
+              '$1\n        packages.add(PrayerOverlayPackage())'
+            );
+          }
+
+          fs.writeFileSync(mainAppPath, mainAppContent);
+          console.log('  ✅ Updated MainApplication.kt');
+        }
+      } else {
+        console.log('⚠️  Native Android files not found, skipping copy');
+      }
+
+      return config;
     },
-  };
+  ]);
+
+  return config;
 }
