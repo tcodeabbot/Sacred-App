@@ -67,7 +67,7 @@
         "expo-build-properties",
         {
           "ios": {
-            "deploymentTarget": "15.1",
+            "deploymentTarget": "16.0",
             "useFrameworks": "static"
           },
           "android": {
@@ -100,7 +100,39 @@
         "origin": false
       },
       "eas": {
-        "projectId": "315ebfb0-3388-4d82-bf83-848ed19f5ff0"
+        "projectId": "315ebfb0-3388-4d82-bf83-848ed19f5ff0",
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "DeviceActivityMonitorExtension",
+                  "bundleIdentifier": "com.eidos.sacred-mobile-app.DeviceActivityMonitorExtension",
+                  "entitlements": {
+                    "com.apple.developer.family-controls": true,
+                    "com.apple.security.application-groups": ["group.com.sacred.app"]
+                  }
+                },
+                {
+                  "targetName": "ShieldConfigurationExtension",
+                  "bundleIdentifier": "com.eidos.sacred-mobile-app.ShieldConfigurationExtension",
+                  "entitlements": {
+                    "com.apple.developer.family-controls": true,
+                    "com.apple.security.application-groups": ["group.com.sacred.app"]
+                  }
+                },
+                {
+                  "targetName": "ShieldActionExtension",
+                  "bundleIdentifier": "com.eidos.sacred-mobile-app.ShieldActionExtension",
+                  "entitlements": {
+                    "com.apple.developer.family-controls": true,
+                    "com.apple.security.application-groups": ["group.com.sacred.app"]
+                  }
+                }
+              ]
+            }
+          }
+        }
       }
     },
     "owner": "abbot"

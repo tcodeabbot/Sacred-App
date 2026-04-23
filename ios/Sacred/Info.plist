@@ -55,6 +55,8 @@
       <key>NSAllowsLocalNetworking</key>
       <true/>
     </dict>
+    <key>NSFamilyControlsUsageDescription</key>
+    <string>Sacred uses Screen Time features to help you stay focused during prayer times by blocking distracting apps.</string>
     <key>NSUserActivityTypes</key>
     <array>
       <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>

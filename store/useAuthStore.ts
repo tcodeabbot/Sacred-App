@@ -148,7 +148,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       if (Platform.OS !== 'ios') {
         throw new Error('Apple Sign-In is only available on iOS devices');
       }
-
       console.log('Initializing Apple Sign-In...');
 
       // Check if Apple Sign-In is available
