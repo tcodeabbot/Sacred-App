@@ -102,9 +102,9 @@ export function NextPrayer({ prayerSchedule }: NextPrayerProps) {
         <View style={styles.content}>
           <View style={styles.iconContainer}>
             <Ionicons
-              name={allComplete && enabledPrayers.length > 0 ? "checkmark-circle" : "time-outline"}
-              size={24}
-              color={allComplete && enabledPrayers.length > 0 ? colors.accent.teal : colors.accent.amber}
+              name={allComplete && enabledPrayers.length > 0 ? 'checkmark-circle' : 'time-outline'}
+              size={22}
+              color={allComplete && enabledPrayers.length > 0 ? colors.accent.primary : colors.accent.primary}
             />
           </View>
 
@@ -116,7 +116,7 @@ export function NextPrayer({ prayerSchedule }: NextPrayerProps) {
               </>
             ) : allComplete && enabledPrayers.length > 0 ? (
               <>
-                <Text style={styles.title}>All prayers complete! 🎉</Text>
+                <Text style={styles.title}>All prayers complete</Text>
                 <Text style={styles.subtitle}>See you tomorrow</Text>
               </>
             ) : (
@@ -129,7 +129,7 @@ export function NextPrayer({ prayerSchedule }: NextPrayerProps) {
             )}
           </View>
 
-          <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
+          <Ionicons name="chevron-forward" size={18} color={colors.text.tertiary} />
         </View>
       </Card>
     </TouchableOpacity>
@@ -148,8 +148,8 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 40,
     height: 40,
-    borderRadius: 12,
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    borderRadius: 10,
+    backgroundColor: colors.accent.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -165,6 +165,6 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 13,
-    color: colors.text.muted,
+    color: colors.text.tertiary,
   },
 });

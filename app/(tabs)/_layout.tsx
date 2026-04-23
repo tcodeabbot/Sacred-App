@@ -9,8 +9,8 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: '#ffffff',
-        tabBarInactiveTintColor: colors.text.muted,
+        tabBarActiveTintColor: '#FFFFFF',
+        tabBarInactiveTintColor: colors.text.tertiary,
         tabBarLabelStyle: styles.tabBarLabel,
       }}
     >
@@ -20,7 +20,7 @@ export default function TabLayout() {
           title: 'Home',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name={focused ? "home" : "home-outline"}
+              name={focused ? 'home' : 'home-outline'}
               size={24}
               color={color}
             />
@@ -33,7 +33,7 @@ export default function TabLayout() {
           title: 'Prayers',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name={focused ? "heart" : "heart-outline"}
+              name={focused ? 'heart' : 'heart-outline'}
               size={24}
               color={color}
             />
@@ -46,7 +46,7 @@ export default function TabLayout() {
           title: 'Journey',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name={focused ? "stats-chart" : "stats-chart-outline"}
+              name={focused ? 'stats-chart' : 'stats-chart-outline'}
               size={24}
               color={color}
             />
@@ -59,7 +59,7 @@ export default function TabLayout() {
           title: 'Settings',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name={focused ? "settings" : "settings-outline"}
+              name={focused ? 'settings' : 'settings-outline'}
               size={24}
               color={color}
             />
@@ -73,14 +73,14 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: colors.background,
-    borderTopColor: colors.card,
+    borderTopColor: colors.borderSubtle,
     borderTopWidth: 1,
-    height: 85,
-    paddingBottom: 25,
+    height: 84,
+    paddingBottom: 24,
     paddingTop: 10,
   },
   tabBarLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500',
   },
 });

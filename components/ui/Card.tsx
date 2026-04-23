@@ -23,7 +23,7 @@ export function Card({ children, style, gradient, padding = 20 }: CardProps) {
       </LinearGradient>
     );
   }
-  
+
   return (
     <View style={[styles.card, styles.solidCard, { padding }, style]}>
       {children}
@@ -33,10 +33,12 @@ export function Card({ children, style, gradient, padding = 20 }: CardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 24,
+    borderRadius: 16,
     overflow: 'hidden',
   },
   solidCard: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
 });

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -14,79 +15,69 @@ import { colors } from '@/constants/colors';
 import { useAppStore } from '@/store/useAppStore';
 import { scriptures } from '@/constants/prayers';
 
-const MINIMUM_PRAYER_TIME = 30; // seconds before Amen button appears
+const MINIMUM_PRAYER_TIME = 30;
 
 export default function ActivePrayerScreen() {
   const router = useRouter();
   const { completePrayer } = useAppStore();
   const [seconds, setSeconds] = useState(0);
   const [scriptureIndex, setScriptureIndex] = useState(0);
-  
+
   const showAmen = seconds >= MINIMUM_PRAYER_TIME;
-  const progress = Math.min(seconds / 120, 1); // 2 minutes = 100%
-  
-  // Timer
+  const progress = Math.min(seconds / 120, 1);
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      setSeconds((s) => s + 1);
-    }, 1000);
+    const interval = setInterval(() => setSeconds(s => s + 1), 1000);
     return () => clearInterval(interval);
   }, []);
-  
-  // Change scripture every 30 seconds
+
   useEffect(() => {
     if (seconds > 0 && seconds % 30 === 0) {
-      setScriptureIndex((i) => (i + 1) % scriptures.length);
+      setScriptureIndex(i => (i + 1) % scriptures.length);
     }
   }, [seconds]);
-  
+
   const formatTime = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
-  
+
   const handleAmen = () => {
     completePrayer();
     router.replace('/(modals)/prayer-complete');
   };
-  
-  const handleExtend = () => {
-    // Just continue the timer
-  };
-  
+
   const currentScripture = scriptures[scriptureIndex];
-  
-  // Progress dots
   const progressDots = 5;
   const filledDots = Math.floor(progress * progressDots);
-  
+
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#0d0d0d', '#1a1a2e', '#16213e']}
+        colors={colors.gradient.activePrayer}
         style={styles.gradient}
       >
-        {/* Teal glow at bottom */}
+        {/* Teal ambient glow */}
         <View style={styles.glowContainer}>
           <LinearGradient
-            colors={['transparent', 'rgba(13, 148, 136, 0.3)']}
+            colors={['transparent', 'rgba(13,148,136,0.2)']}
             style={styles.glow}
           />
         </View>
-        
+
         <SafeAreaView style={styles.safeArea}>
           {/* Timer */}
           <View style={styles.timerContainer}>
             <Text style={styles.timer}>{formatTime(seconds)}</Text>
           </View>
-          
+
           {/* Prayer content */}
           <View style={styles.content}>
             <View style={styles.iconContainer}>
-              <Text style={styles.iconEmoji}>🙏</Text>
+              <Ionicons name="leaf-outline" size={36} color={colors.accent.primary} />
             </View>
-            
+
             <Animated.View
               key={scriptureIndex}
               entering={FadeIn.duration(500)}
@@ -96,20 +87,17 @@ export default function ActivePrayerScreen() {
               <Text style={styles.reference}>— {currentScripture.reference}</Text>
             </Animated.View>
           </View>
-          
+
           {/* Progress dots */}
           <View style={styles.progressContainer}>
             {Array.from({ length: progressDots }).map((_, i) => (
               <View
                 key={i}
-                style={[
-                  styles.progressDot,
-                  i < filledDots && styles.progressDotFilled,
-                ]}
+                style={[styles.progressDot, i < filledDots && styles.progressDotFilled]}
               />
             ))}
           </View>
-          
+
           {/* Actions */}
           <View style={styles.actions}>
             {showAmen ? (
@@ -123,8 +111,8 @@ export default function ActivePrayerScreen() {
                 </Text>
               </View>
             )}
-            
-            <TouchableOpacity onPress={handleExtend} style={styles.extendButton}>
+
+            <TouchableOpacity style={styles.extendButton}>
               <Text style={styles.extendText}>Extend prayer</Text>
             </TouchableOpacity>
           </View>
@@ -163,7 +151,7 @@ const styles = StyleSheet.create({
   timer: {
     fontSize: 64,
     fontWeight: '200',
-    color: '#ffffff',
+    color: '#FFFFFF',
     letterSpacing: 4,
   },
   content: {
@@ -175,13 +163,10 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: 'rgba(13, 148, 136, 0.2)',
+    backgroundColor: colors.accent.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 40,
-  },
-  iconEmoji: {
-    fontSize: 32,
   },
   scriptureContainer: {
     paddingHorizontal: 20,
@@ -189,13 +174,13 @@ const styles = StyleSheet.create({
   scripture: {
     fontSize: 24,
     fontStyle: 'italic',
-    color: '#ffffff',
+    color: '#FFFFFF',
     textAlign: 'center',
     lineHeight: 36,
     marginBottom: 16,
   },
   reference: {
-    fontSize: 16,
+    fontSize: 15,
     color: 'rgba(255,255,255,0.5)',
     textAlign: 'center',
   },
@@ -212,27 +197,29 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)',
   },
   progressDotFilled: {
-    backgroundColor: colors.accent.teal,
+    backgroundColor: colors.accent.primary,
   },
   actions: {
     paddingBottom: 20,
   },
   waitingContainer: {
-    backgroundColor: colors.card,
-    paddingVertical: 16,
-    borderRadius: 50,
+    backgroundColor: colors.surface,
+    paddingVertical: 18,
+    borderRadius: 9999,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   waitingText: {
-    color: colors.text.muted,
-    fontSize: 16,
+    color: colors.text.tertiary,
+    fontSize: 15,
   },
   extendButton: {
     paddingVertical: 16,
     alignItems: 'center',
   },
   extendText: {
-    fontSize: 15,
-    color: 'rgba(255,255,255,0.5)',
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.4)',
   },
 });

@@ -50,7 +50,7 @@ export function ProgressRing({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={colors.card}
+          stroke={colors.border}
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -60,7 +60,7 @@ export function ProgressRing({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={colors.accent.teal}
+          stroke="#FFFFFF"
           strokeWidth={strokeWidth}
           fill="none"
           strokeDasharray={circumference}

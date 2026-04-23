@@ -82,7 +82,7 @@ export default function SignInScreen() {
         showsVerticalScrollIndicator={false}
       >
         <LinearGradient
-          colors={colors.gradients.teal}
+          colors={colors.gradient.brand}
           style={styles.header}
         >
           <SafeAreaView edges={['top']}>
@@ -283,9 +283,9 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: colors.border,
     borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 12,
@@ -317,10 +317,10 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 16,
+    borderColor: colors.border,
+    borderRadius: 12,
     paddingHorizontal: 16,
     marginBottom: 16,
   },

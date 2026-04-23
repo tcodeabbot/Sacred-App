@@ -11,20 +11,24 @@ interface SettingsRowProps {
   iconName: string;
   label: string;
   value?: string;
-  highlight?: boolean;
+  isPremium?: boolean;
   onPress?: () => void;
 }
 
-function SettingsRow({ iconName, label, value, highlight, onPress }: SettingsRowProps) {
+function SettingsRow({ iconName, label, value, isPremium, onPress }: SettingsRowProps) {
   return (
     <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.rowIconContainer}>
-        <Ionicons name={iconName as any} size={22} color={colors.text.secondary} />
+        <Ionicons
+          name={iconName as any}
+          size={20}
+          color={isPremium ? colors.accent.amber : colors.text.secondary}
+        />
       </View>
-      <Text style={[styles.rowLabel, highlight && styles.rowLabelHighlight]}>{label}</Text>
+      <Text style={[styles.rowLabel, isPremium && styles.rowLabelPremium]}>{label}</Text>
       <View style={styles.rowRight}>
         {value && <Text style={styles.rowValue}>{value}</Text>}
-        <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
+        <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
       </View>
     </TouchableOpacity>
   );
@@ -32,55 +36,43 @@ function SettingsRow({ iconName, label, value, highlight, onPress }: SettingsRow
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { settings, blockedApps, resetForDemo } = useAppStore();
+  const { settings, blockedApps } = useAppStore();
   const { signOut, user } = useAuthStore();
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const blockedCount = blockedApps.filter((a) => a.isBlocked).length;
+  const blockedCount = blockedApps.filter(a => a.isBlocked).length;
 
-  const getDurationLabel = (seconds: number) => {
-    return `${seconds / 60} min`;
-  };
+  const getDurationLabel = (seconds: number) => `${seconds / 60} min`;
 
   const handleSignOut = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            setIsSigningOut(true);
+            await signOut();
+            router.replace('/(onboarding)');
+          } catch {
+            Alert.alert('Error', 'Failed to sign out. Please try again.');
+          } finally {
+            setIsSigningOut(false);
+          }
         },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setIsSigningOut(true);
-              await signOut();
-              router.replace('/(onboarding)');
-            } catch (error) {
-              console.error('Sign out error:', error);
-              Alert.alert('Error', 'Failed to sign out. Please try again.');
-            } finally {
-              setIsSigningOut(false);
-            }
-          },
-        },
-      ]
-    );
+      },
+    ]);
   };
-  
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Settings</Text>
-        
+
         {/* Pause Settings */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>PAUSE SETTINGS</Text>
-          </View>
-          <View style={styles.sectionContent}>
+          <Text style={styles.sectionLabel}>Pause Settings</Text>
+          <View style={styles.sectionGroup}>
             <SettingsRow
               iconName="apps-outline"
               label="Apps to Pause"
@@ -88,7 +80,7 @@ export default function SettingsScreen() {
             />
             <View style={styles.separator} />
             <SettingsRow
-              iconName="time-outline"
+              iconName="timer-outline"
               label="Pause Duration"
               value={getDurationLabel(settings.pauseDuration)}
             />
@@ -100,15 +92,13 @@ export default function SettingsScreen() {
             />
           </View>
         </View>
-        
+
         {/* Prayer */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>PRAYER</Text>
-          </View>
-          <View style={styles.sectionContent}>
+          <Text style={styles.sectionLabel}>Prayer</Text>
+          <View style={styles.sectionGroup}>
             <SettingsRow
-              iconName="time-outline"
+              iconName="calendar-outline"
               label="Prayer Schedule"
               value={`${settings.prayerSchedule.filter(p => p.enabled).length} prayers`}
               onPress={() => router.push('/(modals)/prayer-schedule')}
@@ -121,23 +111,21 @@ export default function SettingsScreen() {
             />
           </View>
         </View>
-        
+
         {/* Account */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>ACCOUNT</Text>
-          </View>
-          <View style={styles.sectionContent}>
+          <Text style={styles.sectionLabel}>Account</Text>
+          <View style={styles.sectionGroup}>
             {user && (
               <>
-                <View style={styles.userInfoContainer}>
-                  <View style={styles.userInfoIconContainer}>
-                    <Ionicons name="person-circle-outline" size={24} color={colors.text.secondary} />
+                <View style={styles.userRow}>
+                  <View style={styles.rowIconContainer}>
+                    <Ionicons name="person-circle-outline" size={20} color={colors.text.secondary} />
                   </View>
-                  <View style={styles.userInfoText}>
+                  <View style={styles.userInfo}>
                     <Text style={styles.userEmail}>{user.email}</Text>
                     {user.user_metadata?.full_name && (
-                      <Text style={styles.userDisplayName}>{user.user_metadata.full_name}</Text>
+                      <Text style={styles.userName}>{user.user_metadata.full_name}</Text>
                     )}
                   </View>
                 </View>
@@ -145,9 +133,9 @@ export default function SettingsScreen() {
               </>
             )}
             <SettingsRow
-              iconName="star-outline"
+              iconName="diamond-outline"
               label="Upgrade to Premium"
-              highlight
+              isPremium
               onPress={() => router.push('/(modals)/upgrade')}
             />
             <View style={styles.separator} />
@@ -157,18 +145,16 @@ export default function SettingsScreen() {
             <View style={styles.separator} />
             <SettingsRow
               iconName="log-out-outline"
-              label={isSigningOut ? "Signing out..." : "Sign Out"}
+              label={isSigningOut ? 'Signing out...' : 'Sign Out'}
               onPress={handleSignOut}
             />
           </View>
         </View>
-        
+
         {/* About */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>ABOUT</Text>
-          </View>
-          <View style={styles.sectionContent}>
+          <Text style={styles.sectionLabel}>About</Text>
+          <View style={styles.sectionGroup}>
             <SettingsRow iconName="information-circle-outline" label="About Sacred" />
             <View style={styles.separator} />
             <SettingsRow iconName="star-outline" label="Rate the App" />
@@ -176,13 +162,9 @@ export default function SettingsScreen() {
             <SettingsRow iconName="share-outline" label="Share Sacred" />
           </View>
         </View>
-        
-        {/* Demo Reset Button */}
-        <TouchableOpacity style={styles.resetButton} onPress={resetForDemo}>
-          <Text style={styles.resetText}>Reset for Demo</Text>
-        </TouchableOpacity>
-        
+
         <Text style={styles.version}>Version 1.0.0</Text>
+        <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -199,7 +181,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: colors.text.primary,
     marginTop: 10,
     marginBottom: 24,
@@ -207,30 +189,32 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 24,
   },
-  sectionHeader: {
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors.text.tertiary,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
     marginBottom: 8,
     paddingHorizontal: 4,
   },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.text.muted,
-    letterSpacing: 1,
-  },
-  sectionContent: {
-    backgroundColor: colors.card,
+  sectionGroup: {
+    backgroundColor: colors.surface,
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
     overflow: 'hidden',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+    minHeight: 52,
     paddingVertical: 14,
     paddingHorizontal: 16,
   },
   rowIconContainer: {
     width: 28,
-    marginRight: 14,
+    marginRight: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -239,63 +223,47 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text.primary,
   },
-  rowLabelHighlight: {
+  rowLabelPremium: {
     color: colors.accent.amber,
   },
   rowRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   rowValue: {
-    fontSize: 15,
-    color: colors.text.muted,
+    fontSize: 14,
+    color: colors.text.tertiary,
   },
   separator: {
     height: 1,
-    backgroundColor: colors.cardBorder,
-    marginLeft: 50,
+    backgroundColor: colors.borderSubtle,
+    marginLeft: 56,
   },
-  userInfoContainer: {
+  userRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    minHeight: 52,
     paddingVertical: 14,
     paddingHorizontal: 16,
   },
-  userInfoIconContainer: {
-    width: 28,
-    marginRight: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  userInfoText: {
+  userInfo: {
     flex: 1,
   },
   userEmail: {
-    fontSize: 16,
-    color: colors.text.primary,
-    fontWeight: '500',
-  },
-  userDisplayName: {
-    fontSize: 14,
-    color: colors.text.muted,
-    marginTop: 2,
-  },
-  resetButton: {
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  resetText: {
-    color: colors.text.muted,
     fontSize: 15,
+    fontWeight: '500',
+    color: colors.text.primary,
+  },
+  userName: {
+    fontSize: 13,
+    color: colors.text.tertiary,
+    marginTop: 2,
   },
   version: {
     textAlign: 'center',
-    color: colors.text.muted,
-    fontSize: 13,
-    marginBottom: 100,
+    color: colors.text.tertiary,
+    fontSize: 12,
+    marginBottom: 16,
   },
 });

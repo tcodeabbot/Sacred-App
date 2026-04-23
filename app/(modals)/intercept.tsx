@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -20,10 +21,8 @@ export default function InterceptScreen() {
   const router = useRouter();
   const { interceptedApp, startPrayer, dismissIntercept } = useAppStore();
 
-  // Get random scripture
   const scripture = scriptures[Math.floor(Math.random() * scriptures.length)];
 
-  // Breathing animation
   const scale1 = useSharedValue(1);
   const scale2 = useSharedValue(1);
   const opacity1 = useSharedValue(0.3);
@@ -31,50 +30,40 @@ export default function InterceptScreen() {
   const pulseOpacity = useSharedValue(1);
 
   useEffect(() => {
-    // Circle 1 animation
     scale1.value = withRepeat(
       withSequence(
         withTiming(1.15, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
         withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.ease) })
       ),
-      -1,
-      false
+      -1, false
     );
     opacity1.value = withRepeat(
       withSequence(
         withTiming(0.5, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
         withTiming(0.3, { duration: 2000, easing: Easing.inOut(Easing.ease) })
       ),
-      -1,
-      false
+      -1, false
     );
-
-    // Circle 2 animation (offset)
     scale2.value = withRepeat(
       withSequence(
         withTiming(1.1, { duration: 2500, easing: Easing.inOut(Easing.ease) }),
         withTiming(1, { duration: 2500, easing: Easing.inOut(Easing.ease) })
       ),
-      -1,
-      false
+      -1, false
     );
     opacity2.value = withRepeat(
       withSequence(
         withTiming(0.4, { duration: 2500, easing: Easing.inOut(Easing.ease) }),
         withTiming(0.2, { duration: 2500, easing: Easing.inOut(Easing.ease) })
       ),
-      -1,
-      false
+      -1, false
     );
-
-    // Pulse dot
     pulseOpacity.value = withRepeat(
       withSequence(
         withTiming(0.3, { duration: 1000 }),
         withTiming(1, { duration: 1000 })
       ),
-      -1,
-      false
+      -1, false
     );
   }, []);
 
@@ -88,9 +77,7 @@ export default function InterceptScreen() {
     opacity: opacity2.value,
   }));
 
-  const pulseStyle = useAnimatedStyle(() => ({
-    opacity: pulseOpacity.value,
-  }));
+  const pulseStyle = useAnimatedStyle(() => ({ opacity: pulseOpacity.value }));
 
   const handleBeginPrayer = () => {
     startPrayer(interceptedApp?.id);
@@ -105,12 +92,12 @@ export default function InterceptScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={colors.gradients.darkPurple}
+        colors={colors.gradient.intercept}
         start={{ x: 0, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={styles.gradient}
       >
-        {/* Glowing orb effect */}
+        {/* Orb */}
         <View style={styles.orbContainer}>
           <Animated.View style={[styles.orb, styles.orbOuter, circle1Style]} />
           <Animated.View style={[styles.orb, styles.orbInner, circle2Style]} />
@@ -122,13 +109,9 @@ export default function InterceptScreen() {
             <View style={styles.appIndicator}>
               <View style={styles.appIcon}>
                 {interceptedApp.iconUri ? (
-                  <Image
-                    source={{ uri: interceptedApp.iconUri }}
-                    style={styles.appIconImage}
-                    resizeMode="cover"
-                  />
+                  <Image source={{ uri: interceptedApp.iconUri }} style={styles.appIconImage} resizeMode="cover" />
                 ) : (
-                  <Text style={styles.appEmoji}>{interceptedApp.icon}</Text>
+                  <Ionicons name="square-outline" size={18} color="rgba(255,255,255,0.5)" />
                 )}
               </View>
               <Text style={styles.appName}>{interceptedApp.name}</Text>
@@ -149,11 +132,7 @@ export default function InterceptScreen() {
 
           {/* Actions */}
           <View style={styles.actions}>
-            <Button
-              title="Begin Prayer"
-              onPress={handleBeginPrayer}
-              style={styles.beginButton}
-            />
+            <Button title="Begin Prayer" onPress={handleBeginPrayer} style={styles.beginButton} />
             <TouchableOpacity onPress={handleNotNow} style={styles.notNowButton}>
               <Text style={styles.notNowText}>Not now</Text>
             </TouchableOpacity>
@@ -183,17 +162,17 @@ const styles = StyleSheet.create({
   },
   orb: {
     position: 'absolute',
-    borderRadius: 999,
+    borderRadius: 9999,
   },
   orbOuter: {
     width: 300,
     height: 300,
-    backgroundColor: 'rgba(167, 139, 250, 0.3)',
+    backgroundColor: 'rgba(139,92,246,0.2)',
   },
   orbInner: {
     width: 200,
     height: 200,
-    backgroundColor: 'rgba(139, 92, 246, 0.3)',
+    backgroundColor: 'rgba(109,40,217,0.2)',
   },
   safeArea: {
     flex: 1,
@@ -220,11 +199,8 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 8,
   },
-  appEmoji: {
-    fontSize: 16,
-  },
   appName: {
-    fontSize: 14,
+    fontSize: 13,
     color: 'rgba(255,255,255,0.5)',
   },
   content: {
@@ -234,17 +210,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   scripture: {
-    fontSize: 32,
+    fontSize: 30,
     fontStyle: 'italic',
-    color: '#ffffff',
+    color: '#FFFFFF',
     textAlign: 'center',
-    lineHeight: 44,
+    lineHeight: 42,
     marginBottom: 20,
-
   },
   reference: {
-    fontSize: 18,
-    color: 'rgba(255,255,255,0.6)',
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.5)',
   },
   durationContainer: {
     flexDirection: 'row',
@@ -257,19 +232,19 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.7)',
+    backgroundColor: 'rgba(255,255,255,0.6)',
   },
   durationText: {
-    fontSize: 15,
-    color: 'rgba(255,255,255,0.5)',
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.4)',
   },
   actions: {
     paddingBottom: 20,
   },
   beginButton: {
-    shadowColor: '#ffffff',
+    shadowColor: '#FFFFFF',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 8,
   },
@@ -278,7 +253,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   notNowText: {
-    fontSize: 15,
-    color: 'rgba(255,255,255,0.4)',
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.35)',
   },
 });

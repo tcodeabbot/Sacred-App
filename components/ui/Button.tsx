@@ -41,37 +41,37 @@ export function Button({
   fullWidth = true,
 }: ButtonProps) {
   const scale = useSharedValue(1);
-  
+
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
-  
+
   const handlePressIn = () => {
     scale.value = withSpring(0.97, { damping: 15 });
   };
-  
+
   const handlePressOut = () => {
     scale.value = withSpring(1, { damping: 15 });
   };
-  
+
   const getButtonStyle = (): ViewStyle => {
     const baseStyle: ViewStyle = {
       ...styles.button,
       ...(fullWidth && styles.fullWidth),
     };
-    
+
     switch (variant) {
       case 'secondary':
-        return { ...baseStyle, backgroundColor: colors.card };
+        return { ...baseStyle, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border };
       case 'outline':
-        return { ...baseStyle, backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.cardBorder };
+        return { ...baseStyle, backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.border };
       case 'ghost':
         return { ...baseStyle, backgroundColor: 'transparent' };
       default:
-        return { ...baseStyle, backgroundColor: '#ffffff' };
+        return { ...baseStyle, backgroundColor: '#FFFFFF' };
     }
   };
-  
+
   const getTextStyle = (): TextStyle => {
     switch (variant) {
       case 'secondary':
@@ -82,7 +82,7 @@ export function Button({
         return { ...styles.text, color: colors.background };
     }
   };
-  
+
   const content = (
     <>
       {loading ? (
@@ -92,7 +92,7 @@ export function Button({
       )}
     </>
   );
-  
+
   if (gradient && variant === 'primary') {
     return (
       <AnimatedTouchable
@@ -109,12 +109,15 @@ export function Button({
           end={{ x: 1, y: 0 }}
           style={[styles.button, styles.gradientButton, disabled && styles.disabled]}
         >
-          {content}
+          <Text style={[{ ...styles.text, color: '#FFFFFF' }, textStyle]}>
+            {loading ? '' : title}
+          </Text>
+          {loading && <ActivityIndicator color="#FFFFFF" />}
         </LinearGradient>
       </AnimatedTouchable>
     );
   }
-  
+
   return (
     <AnimatedTouchable
       onPress={onPress}
@@ -131,14 +134,14 @@ export function Button({
 
 const styles = StyleSheet.create({
   button: {
-    paddingVertical: 16,
+    height: 56,
     paddingHorizontal: 24,
-    borderRadius: 50,
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
   },
   gradientButton: {
-    paddingVertical: 16,
+    height: 56,
     paddingHorizontal: 24,
   },
   fullWidth: {

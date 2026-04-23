@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { colors } from '@/constants/colors';
@@ -16,7 +15,6 @@ import {
   deleteUserPrayer,
 } from '@/lib/database';
 
-// Local state for non-authenticated users
 const LOCAL_PRAYERS: UserPrayer[] = [
   {
     id: '1',
@@ -51,72 +49,52 @@ function PrayerCard({
   onLongPress: () => void;
   onToggleFavorite: () => void;
 }) {
-  // Cycle through gradient colors based on sort order
-  const gradientKeys = ['teal', 'purple', 'amber', 'blue', 'pink'] as const;
-  const gradientKey = gradientKeys[(prayer.sortOrder - 1) % gradientKeys.length];
-  const gradientColors = colors.gradients[gradientKey];
-
   return (
     <TouchableOpacity
-      activeOpacity={0.9}
+      activeOpacity={0.85}
       onPress={onPress}
       onLongPress={onLongPress}
       delayLongPress={500}
+      style={styles.prayerCard}
     >
-      <LinearGradient
-        colors={gradientColors}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.prayerCard}
+      {/* Teal accent bar */}
+      <View style={styles.prayerAccentBar} />
+      <View style={styles.prayerContent}>
+        <Text style={styles.prayerTitle}>{prayer.title}</Text>
+        <Text style={styles.prayerExcerpt} numberOfLines={2}>
+          {prayer.excerpt}
+        </Text>
+      </View>
+      <TouchableOpacity
+        style={styles.favoriteButton}
+        onPress={onToggleFavorite}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
-        <View style={styles.prayerContent}>
-          <Text style={styles.prayerTitle}>{prayer.title}</Text>
-          <Text style={styles.prayerExcerpt} numberOfLines={2}>
-            {prayer.excerpt}
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={styles.favoriteButton}
-          onPress={onToggleFavorite}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Ionicons
-            name={prayer.isFavorite ? 'heart' : 'heart-outline'}
-            size={22}
-            color="#fff"
-          />
-        </TouchableOpacity>
-      </LinearGradient>
+        <Ionicons
+          name={prayer.isFavorite ? 'heart' : 'heart-outline'}
+          size={20}
+          color={prayer.isFavorite ? colors.accent.destructive : colors.text.tertiary}
+        />
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 }
 
-function FilterPill({
+function FilterChip({
   label,
   isActive,
   onPress,
-  color,
 }: {
   label: string;
   isActive: boolean;
   onPress: () => void;
-  color?: string;
 }) {
   return (
     <TouchableOpacity
-      style={[
-        styles.filterPill,
-        isActive && styles.filterPillActive,
-        isActive && color && { backgroundColor: color },
-      ]}
+      style={[styles.filterChip, isActive && styles.filterChipActive]}
       onPress={onPress}
     >
-      <Text
-        style={[
-          styles.filterText,
-          isActive && styles.filterTextActive,
-        ]}
-      >
+      <Text style={[styles.filterText, isActive && styles.filterTextActive]}>
         {label}
       </Text>
     </TouchableOpacity>
@@ -135,10 +113,8 @@ export default function PrayersScreen() {
 
   const fetchFilteredPrayers = useCallback(async () => {
     if (!user?.id) return;
-
     try {
       let prayersData: UserPrayer[];
-
       if (activeFilter === 'all') {
         prayersData = await getUserPrayers(user.id);
       } else if (activeFilter === 'favorites') {
@@ -146,7 +122,6 @@ export default function PrayersScreen() {
       } else {
         prayersData = await getUserPrayersByCollection(user.id, activeFilter);
       }
-
       setPrayers(prayersData);
     } catch (error) {
       console.error('Error fetching filtered prayers:', error);
@@ -160,13 +135,9 @@ export default function PrayersScreen() {
       setIsLoading(false);
       return;
     }
-
     try {
-      // Fetch collections first as they are needed for tabs
       const collectionsData = await getPrayerCollections(user.id);
       setCollections(collectionsData);
-
-      // Then fetch prayers based on current filter
       await fetchFilteredPrayers();
     } catch (error) {
       console.error('Error fetching prayers:', error);
@@ -177,16 +148,10 @@ export default function PrayersScreen() {
     }
   }, [user?.id, fetchFilteredPrayers]);
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchData();
-    }, [fetchData])
-  );
+  useFocusEffect(useCallback(() => { fetchData(); }, [fetchData]));
 
   useEffect(() => {
-    if (!isLoading && user?.id) {
-      fetchFilteredPrayers();
-    }
+    if (!isLoading && user?.id) fetchFilteredPrayers();
   }, [activeFilter, isLoading, user?.id]);
 
   const handleRefresh = () => {
@@ -195,173 +160,102 @@ export default function PrayersScreen() {
     fetchData();
   };
 
-  const handleAddPrayer = () => {
-    router.push('/(modals)/prayer-detail');
-  };
-
-  const handlePrayerPress = (prayer: UserPrayer) => {
-    router.push({
-      pathname: '/(modals)/prayer-detail',
-      params: { prayerId: prayer.id },
-    });
-  };
-
-  const handlePrayerLongPress = (prayer: UserPrayer) => {
-    Alert.alert(
-      prayer.title,
-      'What would you like to do?',
-      [
-        {
-          text: prayer.isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
-          onPress: () => handleToggleFavorite(prayer),
-        },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => handleDeletePrayer(prayer),
-        },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
-  };
-
   const handleToggleFavorite = async (prayer: UserPrayer) => {
     const newFavorite = !prayer.isFavorite;
-
-    // Optimistic update
-    setPrayers((prev) =>
-      prev.map((p) =>
-        p.id === prayer.id ? { ...p, isFavorite: newFavorite } : p
-      )
-    );
-
+    setPrayers(prev => prev.map(p => p.id === prayer.id ? { ...p, isFavorite: newFavorite } : p));
     if (user?.id) {
       try {
         await updateUserPrayer(prayer.id, { isFavorite: newFavorite });
-      } catch (error) {
-        console.error('Error toggling favorite:', error);
-        // Revert on error
-        setPrayers((prev) =>
-          prev.map((p) =>
-            p.id === prayer.id ? { ...p, isFavorite: !newFavorite } : p
-          )
-        );
+      } catch {
+        setPrayers(prev => prev.map(p => p.id === prayer.id ? { ...p, isFavorite: !newFavorite } : p));
         Alert.alert('Error', 'Failed to update prayer.');
       }
     }
   };
 
   const handleDeletePrayer = (prayer: UserPrayer) => {
-    Alert.alert(
-      'Delete Prayer',
-      `Are you sure you want to delete "${prayer.title}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            // Optimistic update
-            const previousPrayers = [...prayers];
-            setPrayers((prev) => prev.filter((p) => p.id !== prayer.id));
-
-            if (user?.id) {
-              try {
-                await deleteUserPrayer(prayer.id);
-              } catch (error) {
-                console.error('Error deleting prayer:', error);
-                setPrayers(previousPrayers);
-                Alert.alert('Error', 'Failed to delete prayer.');
-              }
+    Alert.alert('Delete Prayer', `Are you sure you want to delete "${prayer.title}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          const prev = [...prayers];
+          setPrayers(p => p.filter(x => x.id !== prayer.id));
+          if (user?.id) {
+            try {
+              await deleteUserPrayer(prayer.id);
+            } catch {
+              setPrayers(prev);
+              Alert.alert('Error', 'Failed to delete prayer.');
             }
-          },
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
-  const getCollectionColor = (colorKey: string) => {
-    const colorMap: Record<string, string> = {
-      teal: colors.accent.teal,
-      purple: colors.accent.purple,
-      amber: colors.accent.amber,
-      blue: '#3B82F6',
-      pink: '#EC4899',
-    };
-    return colorMap[colorKey] || colors.accent.teal;
+  const handlePrayerLongPress = (prayer: UserPrayer) => {
+    Alert.alert(prayer.title, 'What would you like to do?', [
+      { text: prayer.isFavorite ? 'Remove from Favorites' : 'Add to Favorites', onPress: () => handleToggleFavorite(prayer) },
+      { text: 'Delete', style: 'destructive', onPress: () => handleDeletePrayer(prayer) },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Prayers</Text>
-        <TouchableOpacity style={styles.addButton} onPress={handleAddPrayer}>
-          <Ionicons name="add" size={28} color={colors.accent.teal} />
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => router.push('/(modals)/prayer-detail')}
+        >
+          <Ionicons name="add" size={24} color={colors.accent.primary} />
         </TouchableOpacity>
       </View>
 
-      {/* Filter Pills */}
+      {/* Filter chips */}
       <View style={styles.filtersContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filtersScroll}
-        >
-          <FilterPill
-            label="All"
-            isActive={activeFilter === 'all'}
-            onPress={() => setActiveFilter('all')}
-          />
-          <FilterPill
-            label="Favorites"
-            isActive={activeFilter === 'favorites'}
-            onPress={() => setActiveFilter('favorites')}
-            color="#EC4899"
-          />
-          {collections.map((collection) => (
-            <FilterPill
-              key={collection.id}
-              label={collection.name}
-              isActive={activeFilter === collection.id}
-              onPress={() => setActiveFilter(collection.id)}
-              color={getCollectionColor(collection.color)}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersScroll}>
+          <FilterChip label="All" isActive={activeFilter === 'all'} onPress={() => setActiveFilter('all')} />
+          <FilterChip label="Favorites" isActive={activeFilter === 'favorites'} onPress={() => setActiveFilter('favorites')} />
+          {collections.map(col => (
+            <FilterChip
+              key={col.id}
+              label={col.name}
+              isActive={activeFilter === col.id}
+              onPress={() => setActiveFilter(col.id)}
             />
           ))}
         </ScrollView>
       </View>
 
-      {/* Prayer Cards */}
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            tintColor={colors.accent.teal}
-          />
+          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.accent.primary} />
         }
       >
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.accent.teal} />
+            <ActivityIndicator size="large" color={colors.accent.primary} />
             <Text style={styles.loadingText}>Loading prayers...</Text>
           </View>
         ) : prayers.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="book-outline" size={64} color={colors.text.muted} />
+            <Ionicons name="book-outline" size={56} color={colors.text.tertiary} />
             <Text style={styles.emptyTitle}>No Prayers Yet</Text>
-            <Text style={styles.emptySubtitle}>
-              Tap the + button to add your first prayer
-            </Text>
+            <Text style={styles.emptySubtitle}>Tap the + button to add your first prayer</Text>
           </View>
         ) : (
           <View style={styles.prayersList}>
-            {prayers.map((prayer) => (
+            {prayers.map(prayer => (
               <PrayerCard
                 key={prayer.id}
                 prayer={prayer}
-                onPress={() => handlePrayerPress(prayer)}
+                onPress={() => router.push({ pathname: '/(modals)/prayer-detail', params: { prayerId: prayer.id } })}
                 onLongPress={() => handlePrayerLongPress(prayer)}
                 onToggleFavorite={() => handleToggleFavorite(prayer)}
               />
@@ -369,18 +263,17 @@ export default function PrayersScreen() {
           </View>
         )}
 
-        {/* Add Collection Button */}
         {!isLoading && user?.id && (
           <TouchableOpacity
-            style={styles.addCollectionButton}
+            style={styles.manageCollectionsButton}
             onPress={() => router.push('/(modals)/collection-detail')}
           >
-            <Ionicons name="folder-open-outline" size={20} color={colors.accent.teal} />
-            <Text style={styles.addCollectionText}>Manage Collections</Text>
+            <Ionicons name="folder-open-outline" size={18} color={colors.accent.primary} />
+            <Text style={styles.manageCollectionsText}>Manage Collections</Text>
           </TouchableOpacity>
         )}
 
-        <View style={styles.bottomPadding} />
+        <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -401,7 +294,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: colors.text.primary,
   },
   addButton: {
@@ -409,35 +302,39 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(13, 148, 136, 0.1)',
+    backgroundColor: colors.surface,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   filtersContainer: {
     paddingBottom: 16,
   },
   filtersScroll: {
     paddingHorizontal: 24,
-    gap: 10,
+    gap: 8,
   },
-  filterPill: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: colors.card,
+  filterChip: {
+    height: 34,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  filterPillActive: {
-    backgroundColor: colors.accent.teal,
+  filterChipActive: {
+    backgroundColor: colors.accent.primary,
     borderColor: 'transparent',
   },
   filterText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: colors.text.secondary,
   },
   filterTextActive: {
-    color: '#ffffff',
+    color: '#FFFFFF',
   },
   scrollView: {
     flex: 1,
@@ -472,40 +369,47 @@ const styles = StyleSheet.create({
   },
   prayersList: {
     paddingHorizontal: 24,
-    gap: 16,
+    gap: 12,
   },
   prayerCard: {
-    borderRadius: 20,
-    padding: 20,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    minHeight: 100,
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+    minHeight: 80,
+  },
+  prayerAccentBar: {
+    width: 4,
+    alignSelf: 'stretch',
+    backgroundColor: colors.accent.primary,
   },
   prayerContent: {
     flex: 1,
-    marginRight: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
   },
   prayerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 8,
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text.primary,
+    marginBottom: 4,
   },
   prayerExcerpt: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.85)',
-    lineHeight: 20,
+    fontSize: 13,
+    color: colors.text.secondary,
+    lineHeight: 18,
   },
   favoriteButton: {
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 18,
+    marginRight: 8,
   },
-  addCollectionButton: {
+  manageCollectionsButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -513,17 +417,14 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginHorizontal: 24,
     paddingVertical: 14,
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: colors.border,
   },
-  addCollectionText: {
-    fontSize: 15,
+  manageCollectionsText: {
+    fontSize: 14,
     fontWeight: '500',
-    color: colors.accent.teal,
-  },
-  bottomPadding: {
-    height: 100,
+    color: colors.accent.primary,
   },
 });

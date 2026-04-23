@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/components/ui/Card';
@@ -23,8 +22,6 @@ export default function HomeScreen() {
   const [showQuickSchedule, setShowQuickSchedule] = useState(false);
 
   const todayCount = todaysPrayers.length;
-
-  // Calculate goal based on enabled scheduled prayers
   const scheduledPrayersGoal = settings.prayerSchedule.filter(p => p.enabled).length;
 
   const formatTime = (date: Date) => {
@@ -40,33 +37,20 @@ export default function HomeScreen() {
   };
 
   const handlePrayNow = () => {
-    // Simulate intercept with Instagram
     const instagram = blockedApps.find(a => a.id === 'instagram');
     if (instagram) {
-      triggerIntercept({
-        ...instagram,
-        isBlocked: true,
-      });
+      triggerIntercept({ ...instagram, isBlocked: true });
     }
     router.push('/(modals)/intercept');
   };
 
   const handleQuickScheduleSave = (time: string, name: string, repeatType: 'once' | 'daily') => {
     if (repeatType === 'daily') {
-      // Add to prayer schedule
       const newId = (settings.prayerSchedule.length + 1).toString();
-      const newPrayer = {
-        id: newId,
-        name,
-        time,
-        enabled: true,
-      };
       updateSettings({
-        prayerSchedule: [...settings.prayerSchedule, newPrayer],
+        prayerSchedule: [...settings.prayerSchedule, { id: newId, name, time, enabled: true, duration: 5 }],
       });
     }
-    // For 'once' option, we could add to a separate one-time prayers list
-    // or trigger a notification for that specific time
   };
 
   return (
@@ -77,24 +61,22 @@ export default function HomeScreen() {
           <Text style={styles.title}>Sacred</Text>
           <View style={styles.headerButtons}>
             <TouchableOpacity style={styles.iconButton}>
-              <Ionicons name="notifications-outline" size={22} color={colors.text.primary} />
+              <Ionicons name="notifications-outline" size={22} color={colors.text.secondary} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconButton}>
-              <Ionicons name="settings-outline" size={22} color={colors.text.primary} />
+              <Ionicons name="settings-outline" size={22} color={colors.text.secondary} />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Next Prayer Section */}
+        {/* Next Prayer */}
         <NextPrayer prayerSchedule={settings.prayerSchedule} />
 
         {/* Hero Card */}
-        <Card gradient={colors.gradients.teal} style={styles.heroCard}>
+        <Card gradient={colors.gradient.brand} style={styles.heroCard}>
           <View style={styles.heroContent}>
             <Text style={styles.heroLabel}>Today's Prayers</Text>
-
             <EncouragementText current={todayCount} goal={scheduledPrayersGoal} />
-
             <View style={styles.progressContainer}>
               <ProgressRing
                 progress={scheduledPrayersGoal > 0 ? todayCount / scheduledPrayersGoal : 0}
@@ -126,8 +108,8 @@ export default function HomeScreen() {
         {/* Quick Actions */}
         <View style={styles.quickActions}>
           <TouchableOpacity style={styles.actionCard} onPress={handlePrayNow}>
-            <View style={[styles.actionIcon, { backgroundColor: 'rgba(245, 158, 11, 0.2)' }]}>
-              <Ionicons name="flower-outline" size={26} color="#F59E0B" />
+            <View style={[styles.actionIcon, { backgroundColor: colors.accent.primaryLight }]}>
+              <Ionicons name="leaf-outline" size={24} color={colors.accent.primary} />
             </View>
             <Text style={styles.actionTitle}>Pray Now</Text>
             <Text style={styles.actionSubtitle}>2 min</Text>
@@ -144,16 +126,16 @@ export default function HomeScreen() {
               );
             }}
           >
-            <View style={[styles.actionIcon, { backgroundColor: 'rgba(26, 155, 142, 0.2)' }]}>
-              <Ionicons name="lock-closed" size={26} color={colors.accent.teal} />
+            <View style={[styles.actionIcon, { backgroundColor: colors.accent.primaryLight }]}>
+              <Ionicons name="shield-outline" size={24} color={colors.accent.primary} />
             </View>
             <Text style={styles.actionTitle}>Test Lock</Text>
             <Text style={styles.actionSubtitle}>Try it</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionCard}>
-            <View style={[styles.actionIcon, { backgroundColor: 'rgba(124, 58, 237, 0.2)' }]}>
-              <Ionicons name="book-outline" size={26} color="#7C3AED" />
+          <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/(tabs)/prayers')}>
+            <View style={[styles.actionIcon, { backgroundColor: colors.accent.primaryLight }]}>
+              <Ionicons name="book-outline" size={24} color={colors.accent.primary} />
             </View>
             <Text style={styles.actionTitle}>Scripture</Text>
             <Text style={styles.actionSubtitle}>Daily verse</Text>
@@ -176,17 +158,9 @@ export default function HomeScreen() {
                 <View key={prayer.id} style={styles.prayerItem}>
                   <View style={styles.prayerIcon}>
                     {app?.iconUri ? (
-                      <Image
-                        source={{ uri: app.iconUri }}
-                        style={styles.prayerIconImage}
-                        resizeMode="cover"
-                      />
+                      <Image source={{ uri: app.iconUri }} style={styles.prayerIconImage} resizeMode="cover" />
                     ) : (
-                      <Ionicons
-                        name={app?.icon as any || 'flower-outline'}
-                        size={22}
-                        color={colors.text.primary}
-                      />
+                      <Ionicons name="leaf-outline" size={20} color={colors.text.secondary} />
                     )}
                   </View>
                   <View style={styles.prayerInfo}>
@@ -203,14 +177,12 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      {/* Quick Schedule Bottom Sheet */}
       <QuickScheduleSheet
         isVisible={showQuickSchedule}
         onClose={() => setShowQuickSchedule(false)}
         onSave={handleQuickScheduleSave}
       />
 
-      {/* Floating Action Button */}
       <FloatingActionButton
         onPress={() => router.push('/(modals)/prayer-schedule')}
         icon="time-outline"
@@ -237,7 +209,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: colors.text.primary,
   },
   headerButtons: {
@@ -247,8 +219,10 @@ const styles = StyleSheet.create({
   iconButton: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.card,
+    borderRadius: 9999,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -261,12 +235,12 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   heroLabel: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.7)',
     marginBottom: 12,
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    fontWeight: '600',
+    letterSpacing: 0.5,
+    fontWeight: '500',
   },
   progressContainer: {
     alignItems: 'center',
@@ -278,44 +252,46 @@ const styles = StyleSheet.create({
   },
   progressNumber: {
     fontSize: 48,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#ffffff',
   },
   progressGoal: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.7)',
     marginTop: 4,
     textDecorationLine: 'underline',
   },
   quickActions: {
     flexDirection: 'row',
-    gap: 16,
+    gap: 12,
     marginBottom: 32,
   },
   actionCard: {
     flex: 1,
-    backgroundColor: colors.card,
-    borderRadius: 20,
-    padding: 20,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 16,
     alignItems: 'center',
   },
   actionIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   actionTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: colors.text.primary,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   actionSubtitle: {
-    fontSize: 13,
-    color: colors.text.muted,
+    fontSize: 12,
+    color: colors.text.tertiary,
   },
   section: {
     marginBottom: 32,
@@ -337,44 +313,46 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 14,
-    color: colors.text.muted,
+    color: colors.text.tertiary,
   },
   prayerItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: colors.card,
+    borderBottomColor: colors.borderSubtle,
   },
   prayerIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: colors.card,
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
     overflow: 'hidden',
   },
   prayerIconImage: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 40,
+    height: 40,
   },
   prayerInfo: {
     flex: 1,
   },
   prayerTime: {
-    fontSize: 16,
+    fontSize: 15,
+    fontWeight: '500',
     color: colors.text.primary,
     marginBottom: 2,
   },
   prayerApp: {
-    fontSize: 14,
-    color: colors.text.muted,
+    fontSize: 13,
+    color: colors.text.tertiary,
   },
   prayerDuration: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.text.secondary,
   },
 });
