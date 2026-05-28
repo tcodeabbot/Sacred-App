@@ -21,6 +21,8 @@ import {
     selectAppsToBlock,
     applyShield,
     removeShield,
+    setShieldActive,
+    setPrayerSessionActive,
     schedulePrayerShields as scheduleIOSPrayerShields,
     stopPrayerMonitoring as stopIOSMonitoring,
     initializeIOSScreenTime,
@@ -189,37 +191,38 @@ export async function applyAppShield(): Promise<boolean> {
 }
 
 /**
- * iOS only: Remove shield
+ * iOS only: Mark a schedule's shield as active (call when prayer session starts)
  */
-export async function removeAppShield(): Promise<boolean> {
+export async function markShieldActive(scheduleId: string): Promise<boolean> {
     if (Platform.OS === 'ios') {
-        return await removeShield();
+        return await setShieldActive(scheduleId);
+    }
+    return false;
+}
+
+/**
+ * iOS only: Remove shield for the completed schedule.
+ * Fully unblocks apps only when all concurrent schedules are done.
+ */
+export async function removeAppShield(scheduleId: string): Promise<boolean> {
+    if (Platform.OS === 'ios') {
+        return await removeShield(scheduleId);
     }
     console.warn('removeAppShield is iOS-only');
     return false;
 }
 
 /**
- * Android only: Add prayer event listeners
+ * iOS only: Write prayer_session_active flag so ShieldConfigurationExtension
+ * shows "Prayer in progress" vs "Time to Pray" UI state.
  */
-export function addPrayerEventListeners() {
-    if (Platform.OS === 'android') {
-        const unsubscribeCompleted = addPrayerCompletedListener((scheduleId) => {
-            console.log('✅ Prayer completed:', scheduleId);
-        });
-
-        const unsubscribeDismissed = addPrayerDismissedListener((scheduleId) => {
-            console.log('❌ Prayer dismissed:', scheduleId);
-        });
-
-        return () => {
-            unsubscribeCompleted();
-            unsubscribeDismissed();
-        };
+export async function setAppPrayerSessionActive(active: boolean): Promise<boolean> {
+    if (Platform.OS === 'ios') {
+        return await setPrayerSessionActive(active);
     }
-
-    return () => { };
+    return false;
 }
+
 
 /**
  * Get platform-specific info

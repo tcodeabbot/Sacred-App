@@ -15,19 +15,24 @@ import { usePrayerStore } from '@/store/usePrayerStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { UserPrayer } from '@/types';
 import { createPrayerSession, updateUserStatsAfterPrayer, getUserPrayerById } from '@/lib/database';
+import { removeAppShield, setAppPrayerSessionActive } from '@/services/prayerInterruption';
 
 export default function PrayerSession() {
   const router = useRouter();
-  const { hideLockScreen, currentScheduleName, currentPrayerId } = usePrayerStore();
+  const { hideLockScreen, currentScheduleName, currentScheduleId, currentPrayerId } = usePrayerStore();
   const { user } = useAuthStore();
 
   const [startTime] = useState(new Date());
   const [elapsedTime, setElapsedTime] = useState(0);
   const [mode, setMode] = useState<'silent' | 'scripture' | 'written'>('silent');
   const [isComplete, setIsComplete] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const [selectedPrayer, setSelectedPrayer] = useState<UserPrayer | null>(null);
 
   useEffect(() => {
+    // Signal to ShieldConfigurationExtension that prayer is in progress
+    setAppPrayerSessionActive(true);
+
     const interval = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startTime.getTime()) / 1000);
       setElapsedTime(elapsed);
@@ -60,13 +65,15 @@ export default function PrayerSession() {
   };
 
   const handleCompletePrayer = async () => {
-    if (!user) return;
+    if (!user) {
+      setSaveError(true);
+      return;
+    }
 
     const duration = Math.floor(elapsedTime / 60);
     const now = new Date();
 
     try {
-      // Save prayer session
       await createPrayerSession(user.id, {
         startedAt: startTime,
         completedAt: now,
@@ -77,38 +84,76 @@ export default function PrayerSession() {
         tags: [],
       });
 
-      // Update user stats
       await updateUserStatsAfterPrayer(user.id, duration, now);
+
+      // Unblock distraction apps now that prayer is complete
+      if (currentScheduleId) {
+        await removeAppShield(currentScheduleId);
+      }
+      await setAppPrayerSessionActive(false);
 
       setIsComplete(true);
 
-      // Navigate back after showing success
       setTimeout(() => {
         hideLockScreen();
         router.back();
       }, 2000);
     } catch (error) {
       console.error('Error saving prayer session:', error);
+      // Still unblock — don't trap the user due to a Supabase error
+      if (currentScheduleId) {
+        await removeAppShield(currentScheduleId).catch(() => {});
+      }
+      await setAppPrayerSessionActive(false).catch(() => {});
+      setSaveError(true);
     }
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    // Shield stays on — user chose to exit without praying
+    await setAppPrayerSessionActive(false).catch(() => {});
+    hideLockScreen();
+    router.back();
+  };
+
+  const handleErrorSkip = async () => {
+    // Session failed to save but we still unblock to avoid trapping the user
+    if (currentScheduleId) {
+      await removeAppShield(currentScheduleId).catch(() => {});
+    }
+    await setAppPrayerSessionActive(false).catch(() => {});
     hideLockScreen();
     router.back();
   };
 
   if (isComplete) {
     return (
-      <LinearGradient
-        colors={['#0a4d45', '#1a9b8e']}
-        style={styles.container}
-      >
+      <LinearGradient colors={['#0a4d45', '#1a9b8e']} style={styles.container}>
         <View style={styles.completeContainer}>
           <Ionicons name="checkmark-circle" size={100} color="#fff" />
           <Text style={styles.completeTitle}>Prayer Complete!</Text>
           <Text style={styles.completeSubtitle}>
             You spent {formatTime(elapsedTime)} in prayer
           </Text>
+        </View>
+      </LinearGradient>
+    );
+  }
+
+  if (saveError) {
+    return (
+      <LinearGradient colors={['#0a4d45', '#1a9b8e']} style={styles.container}>
+        <View style={styles.completeContainer}>
+          <Ionicons name="warning-outline" size={80} color="rgba(255,255,255,0.8)" />
+          <Text style={styles.completeTitle}>Could not save session</Text>
+          <Text style={styles.completeSubtitle}>
+            Your prayer time was not recorded. Your apps will be unblocked.
+          </Text>
+          <Pressable style={[styles.completeButton, { marginTop: 32 }]} onPress={handleErrorSkip}>
+            <LinearGradient colors={['#fff', '#f0f0f0']} style={styles.completeButtonGradient}>
+              <Text style={styles.completeButtonText}>OK</Text>
+            </LinearGradient>
+          </Pressable>
         </View>
       </LinearGradient>
     );

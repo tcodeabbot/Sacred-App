@@ -6,7 +6,12 @@ interface PrayerScreenTimeManager {
     checkScreenTimeAuthorization(): Promise<'notDetermined' | 'denied' | 'approved' | 'unknown'>;
     selectAppsToBlock(): Promise<boolean>;
     applyShield(appTokens: string[]): Promise<boolean>;
-    removeShield(): Promise<boolean>;
+    // scheduleId-aware: marks schedule active in active_shields App Group dict
+    setShieldActive(scheduleId: string): Promise<boolean>;
+    // scheduleId-aware: only fully removes shields when all active_shields entries are completed/expired
+    removeShield(scheduleId: string): Promise<boolean>;
+    // Writes prayer_session_active flag to App Group so ShieldConfigurationExtension shows correct UI
+    setPrayerSessionActive(active: boolean): Promise<boolean>;
     schedulePrayerShields(prayerSchedule: PrayerScheduleItem[]): Promise<boolean>;
     stopAllPrayerMonitoring(): Promise<boolean>;
 }
@@ -98,17 +103,51 @@ export async function applyShield(appTokens: string[] = []): Promise<boolean> {
 }
 
 /**
- * Remove shield from all apps (iOS only)
+ * Mark a schedule's shield as active in the App Group active_shields dict (iOS only)
  */
-export async function removeShield(): Promise<boolean> {
+export async function setShieldActive(scheduleId: string): Promise<boolean> {
     if (Platform.OS !== 'ios') {
         return false;
     }
 
     try {
-        return await ScreenTimeManager.removeShield();
+        return await ScreenTimeManager.setShieldActive(scheduleId);
+    } catch (error) {
+        console.error('Error setting shield active:', error);
+        return false;
+    }
+}
+
+/**
+ * Remove shield for a completed schedule (iOS only).
+ * Shields fully unblock only when all active_shields entries are completed or expired.
+ */
+export async function removeShield(scheduleId: string): Promise<boolean> {
+    if (Platform.OS !== 'ios') {
+        return false;
+    }
+
+    try {
+        return await ScreenTimeManager.removeShield(scheduleId);
     } catch (error) {
         console.error('Error removing shield:', error);
+        return false;
+    }
+}
+
+/**
+ * Write prayer_session_active to App Group UserDefaults (iOS only).
+ * ShieldConfigurationExtension reads this to show "Prayer in progress" vs "Time to Pray" UI.
+ */
+export async function setPrayerSessionActive(active: boolean): Promise<boolean> {
+    if (Platform.OS !== 'ios') {
+        return false;
+    }
+
+    try {
+        return await ScreenTimeManager.setPrayerSessionActive(active);
+    } catch (error) {
+        console.error('Error setting prayer session active:', error);
         return false;
     }
 }

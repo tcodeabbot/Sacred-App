@@ -122,6 +122,7 @@ export default function HomeScreen() {
               showLockScreen(
                 firstScheduledPrayer?.name || 'Prayer Time',
                 firstScheduledPrayer?.selectedPrayerId,
+                firstScheduledPrayer?.id,
                 firstScheduledPrayer?.duration || 5
               );
             }}

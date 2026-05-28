@@ -11,6 +11,7 @@ interface PrayerState {
   // Prayer Lock Screen
   isLockScreenVisible: boolean;
   currentScheduleName: string | null;
+  currentScheduleId: string | null;
   currentPrayerId: string | null; // ID of the selected user prayer to display
   currentDuration: number; // Duration in minutes
 
@@ -19,7 +20,7 @@ interface PrayerState {
   notificationIds: Record<string, string>; // scheduleId -> notificationId
 
   // Actions
-  showLockScreen: (scheduleName?: string, prayerId?: string, duration?: number) => void;
+  showLockScreen: (scheduleName?: string, prayerId?: string, scheduleId?: string, duration?: number) => void;
   hideLockScreen: () => void;
 
   // Schedule management
@@ -60,15 +61,17 @@ const DEFAULT_SCHEDULES: PrayerSchedule[] = [
 export const usePrayerStore = create<PrayerState>((set, get) => ({
   isLockScreenVisible: false,
   currentScheduleName: null,
+  currentScheduleId: null,
   currentPrayerId: null,
   currentDuration: 5, // Default 5 minutes
   schedules: DEFAULT_SCHEDULES,
   notificationIds: {},
 
-  showLockScreen: (scheduleName, prayerId, duration) => {
+  showLockScreen: (scheduleName, prayerId, scheduleId, duration) => {
     set({
       isLockScreenVisible: true,
       currentScheduleName: scheduleName || 'Prayer Time',
+      currentScheduleId: scheduleId || null,
       currentPrayerId: prayerId || null,
       currentDuration: duration || 5,
     });
@@ -78,6 +81,7 @@ export const usePrayerStore = create<PrayerState>((set, get) => ({
     set({
       isLockScreenVisible: false,
       currentScheduleName: null,
+      currentScheduleId: null,
       currentPrayerId: null,
       currentDuration: 5,
     });

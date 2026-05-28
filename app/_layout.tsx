@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet, AppState, Platform } from 'react-native';
+import { StyleSheet } from 'react-native';
 import * as Linking from 'expo-linking';
 import * as Notifications from 'expo-notifications';
 import { colors } from '@/constants/colors';
@@ -16,12 +16,13 @@ import {
   requestNotificationPermissions,
   syncPrayerScheduleItems,
 } from '@/services/notificationService';
+import { addPrayerCompletedListener, addPrayerDismissedListener } from '@/services/nativePrayerOverlay';
+import { createPrayerSession, updateUserStatsAfterPrayer } from '@/lib/database';
 
 // Unified prayer interruption service (Android + iOS)
 import {
   initializePrayerInterruption,
   updatePrayerSchedule as updateUnifiedPrayerSchedule,
-  addPrayerEventListeners,
   getPrayerInterruptionInfo,
 } from '@/services/prayerInterruption';
 
@@ -29,48 +30,60 @@ export default function RootLayout() {
   const router = useRouter();
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
   const user = useAuthStore((state) => state.user);
-  const { initialize, showLockScreen, isLockScreenVisible, hideLockScreen, currentScheduleName, currentDuration } = usePrayerStore();
+  const { showLockScreen, isLockScreenVisible, hideLockScreen, currentScheduleName, currentDuration } = usePrayerStore();
   const { blockedApps, settings, loadPrayerSchedule } = useAppStore();
 
   useEffect(() => {
-    // Initialize auth
     initializeAuth();
 
-    // Log prayer interruption capabilities
     const info = getPrayerInterruptionInfo();
     console.log('🙏 Prayer Interruption:', info);
 
-    // Initialize notification listeners
     const setupNotifications = async () => {
-      // Request permissions
       const granted = await requestNotificationPermissions();
-
       if (granted) {
-        // Sync prayer schedules with notifications
         await syncPrayerScheduleItems(settings.prayerSchedule);
         console.log('Prayer schedules synced with notifications');
-
-        // Initialize unified prayer interruption (both iOS and Android)
         await initializePrayerInterruption(settings.prayerSchedule);
       }
     };
 
     setupNotifications();
 
-    // Listen for prayer events (Android only)
-    const unsubscribe = addPrayerEventListeners();
+    // Android: prayer completed in the native overlay — save session to Supabase
+    const unsubscribePrayerCompleted = addPrayerCompletedListener(async (scheduleId) => {
+      console.log('✅ Prayer completed (Android):', scheduleId);
+      const currentUser = useAuthStore.getState().user;
+      if (!currentUser) return;
 
-    return () => {
-      unsubscribe();
-    };
+      const now = new Date();
+      const schedule = useAppStore.getState().settings.prayerSchedule.find(p => p.id === scheduleId);
+      const duration = schedule?.duration ?? 5;
+      const startedAt = new Date(now.getTime() - duration * 60 * 1000);
 
-    // Listen for notification taps (when app is in background)
+      try {
+        await createPrayerSession(currentUser.id, {
+          startedAt,
+          completedAt: now,
+          duration,
+          triggeredBy: scheduleId,
+          completed: true,
+          mode: 'silent',
+          tags: [],
+        });
+        await updateUserStatsAfterPrayer(currentUser.id, duration, now);
+        console.log('✅ Android prayer session saved');
+      } catch (error) {
+        console.error('Error saving Android prayer session:', error);
+      }
+    });
+
+    const unsubscribePrayerDismissed = addPrayerDismissedListener((scheduleId) => {
+      console.log('❌ Prayer dismissed (Android):', scheduleId);
+    });
+
+    // Background notification tap — shows prayer lock screen
     const subscription1 = addNotificationResponseListener((response) => {
-      console.log('📱 Notification tapped!', {
-        actionId: response.actionIdentifier,
-        data: response.notification.request.content.data,
-      });
-
       const data = response.notification.request.content.data;
       const actionId = response.actionIdentifier;
 
@@ -78,53 +91,36 @@ export default function RootLayout() {
         const scheduleId = data.scheduleId as string;
         const scheduledPrayer = settings.prayerSchedule.find(p => p.id === scheduleId);
 
-        console.log('🔍 Found scheduled prayer:', scheduledPrayer);
-
-        // Handle different actions
         if (actionId === 'BEGIN_PRAYER' || actionId === Notifications.DEFAULT_ACTION_IDENTIFIER) {
-          // User tapped notification or "Begin Prayer" button
-          console.log('✅ Showing lock screen from notification tap');
           showLockScreen(
             data.scheduleName as string,
             scheduledPrayer?.selectedPrayerId,
+            scheduleId,
             scheduledPrayer?.duration || 5
           );
-        } else if (actionId === 'DISMISS') {
-          // User dismissed the notification
-          console.log('❌ Prayer notification dismissed by user');
         }
-      } else {
-        console.warn('⚠️ Unknown notification type:', data.type);
       }
     });
 
-    // Listen for notifications when app is in foreground
+    // Foreground notification — show prayer lock screen automatically
     const subscription2 = addNotificationReceivedListener((notification) => {
-      console.log('🔔 Notification received (app in foreground)!', {
-        title: notification.request.content.title,
-        data: notification.request.content.data,
-      });
-
       const data = notification.request.content.data;
       if (data.type === 'prayer-reminder') {
         const scheduleId = data.scheduleId as string;
         const scheduledPrayer = settings.prayerSchedule.find(p => p.id === scheduleId);
 
-        console.log('🔍 Found scheduled prayer:', scheduledPrayer);
-        console.log('✅ Showing lock screen automatically (app in foreground)');
-
-        // Automatically show lock screen when notification arrives in foreground
         showLockScreen(
           data.scheduleName as string,
           scheduledPrayer?.selectedPrayerId,
+          scheduleId,
           scheduledPrayer?.duration || 5
         );
-      } else {
-        console.warn('⚠️ Unknown notification type in foreground:', data.type);
       }
     });
 
     return () => {
+      unsubscribePrayerCompleted();
+      unsubscribePrayerDismissed();
       subscription1.remove();
       subscription2.remove();
     };
@@ -145,11 +141,7 @@ export default function RootLayout() {
   useEffect(() => {
     const syncSchedules = async () => {
       await syncPrayerScheduleItems(settings.prayerSchedule);
-
-      // Update unified prayer schedule (both Android and iOS)
       await updateUnifiedPrayerSchedule(settings.prayerSchedule);
-
-      console.log('Prayer schedules updated for both notifications and interruption');
     };
 
     syncSchedules();
@@ -157,51 +149,33 @@ export default function RootLayout() {
 
   // Handle deep links to open prayer lock screen
   useEffect(() => {
-    // Handle initial URL when app opens from notification
+    const handleDeepLink = (url: string) => {
+      const { hostname, queryParams } = Linking.parse(url);
+
+      if (hostname === 'prayer-lock') {
+        const scheduleName = (queryParams?.name as string) || 'Prayer Time';
+        const scheduleId = queryParams?.id as string;
+        const scheduledPrayer = settings.prayerSchedule.find(p => p.id === scheduleId);
+
+        showLockScreen(
+          scheduleName,
+          scheduledPrayer?.selectedPrayerId,
+          scheduleId,
+          scheduledPrayer?.duration || 5
+        );
+      }
+    };
+
     const handleInitialUrl = async () => {
       const initialUrl = await Linking.getInitialURL();
-      if (initialUrl) {
-        handleDeepLink(initialUrl);
-      }
+      if (initialUrl) handleDeepLink(initialUrl);
     };
 
     handleInitialUrl();
 
-    // Listen for deep links while app is running
-    const subscription = Linking.addEventListener('url', ({ url }) => {
-      handleDeepLink(url);
-    });
-
-    return () => {
-      subscription.remove();
-    };
+    const subscription = Linking.addEventListener('url', ({ url }) => handleDeepLink(url));
+    return () => subscription.remove();
   }, [settings.prayerSchedule]);
-
-  // Handle deep link URLs
-  const handleDeepLink = (url: string) => {
-    console.log('Received deep link:', url);
-
-    // Parse the URL
-    const { hostname, queryParams } = Linking.parse(url);
-
-    // Handle prayer-lock deep link
-    if (hostname === 'prayer-lock') {
-      const scheduleName = queryParams?.name as string || 'Prayer Time';
-      const scheduleId = queryParams?.id as string;
-
-      // Find the prayer schedule item
-      const scheduledPrayer = settings.prayerSchedule.find(p => p.id === scheduleId);
-
-      // Show lock screen
-      showLockScreen(
-        scheduleName,
-        scheduledPrayer?.selectedPrayerId,
-        scheduledPrayer?.duration || 5
-      );
-
-      console.log('Showing prayer lock screen from deep link');
-    }
-  };
 
   return (
     <GestureHandlerRootView style={styles.container}>
@@ -229,9 +203,7 @@ export default function RootLayout() {
       <PrayerLockScreen
         visible={isLockScreenVisible}
         onDismiss={hideLockScreen}
-        onStartPrayer={() => {
-          router.push('/prayer-session');
-        }}
+        onStartPrayer={() => router.push('/prayer-session')}
         scheduleName={currentScheduleName || undefined}
         blockedApps={blockedApps.filter(app => app.isBlocked).map(app => app.name)}
         duration={currentDuration}
